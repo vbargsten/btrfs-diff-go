@@ -22,6 +22,7 @@ import "fmt"
 import "unsafe"
 import "syscall"
 import "strings"
+import "path"
 import "path/filepath"
 
 // NAUGHTYNESS:
@@ -454,10 +455,68 @@ func btrfsSendDiffs(source, subvolume string) (*Diff, error) {
 	return &diff, nil
 }
 
+func usage(progname string) {
+	fmt.Printf(`
+%[1]s - Analyse the differences between two related btrfs subvolumes.
+
+USAGE
+
+	%[1]s PARENT CHILD
+		Analyse the difference between btrfs PARENT and CHILD.
+
+	%[1]s [ -h | --help ]
+		Display help.
+
+ARGUMENTS
+
+	PARENT
+		A btrfs subvolume that is the parent of the CHILD one.
+
+	CHILD
+		A btrfs subvolume that is the child of the PARENT one.
+
+OPTIONS
+
+	-h | --help
+		Display help.
+
+EXAMPLES
+
+	Get the differences between two snapshots.
+	$ %[1]s /backup/btrfs-sp/rootfs/2020-12-25_22h00m00.shutdown.safe \
+		/backup/btrfs-sp/rootfs/2019-12-25_21h00m00.shutdown.safe
+
+AUTHORS
+
+	Originally written by: David Buckley
+	Extended, fixed, and maintained by: Michael Bideau
+
+REPORTING BUGS
+	Report bugs to: <https://github.com/mbideau/btrfs-diff-go/issues>
+
+COPYRIGHT
+
+	Copyright © 2020-2021 Michael Bideau.
+	License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
+	This is free software: you are free to change and redistribute it.
+	There is NO WARRANTY, to the extent permitted by law.
+
+	Info: original license chosen by David Buckley was MIT, but it allows sublicensing, so I
+	      chose to sublicense it to GPLv3+ to ensure code sharing
+
+SEE ALSO
+
+	Home page: <https://github.com/mbideau/btrfs-diff-go>
+
+`, progname)
+}
+
 func main() {
 	var parent string
 	var child string
-	if (len(os.Args) > 2) {
+	if (len(os.Args) <= 2 || os.Args[1] == "-h" || os.Args[1] == "--help") {
+		usage(path.Base(os.Args[0]))
+	} else {
 		parent, _ = filepath.Abs(os.Args[1])
 		child, _ = filepath.Abs(os.Args[2])
 
@@ -479,13 +538,12 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: '%s' is not a directory\n", child)
 			os.Exit(1)
 		}
-	}
 
-
-	diff, err := btrfsSendDiffs(parent, child)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(1)
+		diff, err := btrfsSendDiffs(parent, child)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v", err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stdout, "TRACE GENERATED\nTRACE %v\n", strings.Join(diff.Changes(), "\nTRACE "))
 	}
-	fmt.Fprintf(os.Stdout, "TRACE GENERATED\nTRACE %v\n", strings.Join(diff.Changes(), "\nTRACE "))
 }
