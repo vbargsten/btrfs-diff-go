@@ -502,7 +502,7 @@ func usage(progname string) {
 
 USAGE
 
-	%[1]s PARENT CHILD
+	%[1]s [ --debug ] PARENT CHILD
 		Analyse the difference between btrfs PARENT and CHILD.
 
 	%[1]s [ -h | --help ]
@@ -520,6 +520,9 @@ OPTIONS
 
 	-h | --help
 		Display help.
+
+	--debug
+		Be more verbose.
 
 EXAMPLES
 
