@@ -591,6 +591,10 @@ func main() {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
-		fmt.Fprintf(os.Stdout, "TRACE GENERATED\nTRACE %v\n", strings.Join(diff.Changes(), "\nTRACE "))
+		changes := diff.Changes()
+		if len(changes) > 0 {
+			fmt.Fprintf(os.Stdout, "%v\n", strings.Join(changes, "\n"))
+			os.Exit(1)
+		}
 	}
 }
