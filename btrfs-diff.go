@@ -22,6 +22,7 @@ import "fmt"
 import "unsafe"
 import "syscall"
 import "strings"
+import "path/filepath"
 
 // NAUGHTYNESS:
 // For a recursive delete, we get a rename, then a delete on the renamed copy.
@@ -454,9 +455,32 @@ func btrfsSendDiffs(source, subvolume string) (*Diff, error) {
 }
 
 func main() {
-	//root := "/disks/ssdbtrfs"
-	parent := os.Args[1]
-	child := os.Args[2]
+	var parent string
+	var child string
+	if (len(os.Args) > 2) {
+		parent, _ = filepath.Abs(os.Args[1])
+		child, _ = filepath.Abs(os.Args[2])
+
+		p_stat, p_err := os.Stat(parent)
+		if p_err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", p_err)
+			os.Exit(1)
+		}
+		if ! p_stat.IsDir() {
+			fmt.Fprintf(os.Stderr, "Error: '%s' is not a directory\n", parent)
+			os.Exit(1)
+		}
+		c_stat, c_err := os.Stat(child)
+		if c_err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", c_err)
+			os.Exit(1)
+		}
+		if ! c_stat.IsDir() {
+			fmt.Fprintf(os.Stderr, "Error: '%s' is not a directory\n", child)
+			os.Exit(1)
+		}
+	}
+
 
 	diff, err := btrfsSendDiffs(parent, child)
 	if err != nil {
