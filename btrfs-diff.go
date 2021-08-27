@@ -31,6 +31,8 @@ import "path/filepath"
 // For a create, we get a garbage name, then a rename.
 // * We need to understand that if we get a rename of a file that was new, we must rename all the stuff we did to it.
 
+var debug bool = false
+
 type Op int
 
 const (
@@ -116,7 +118,9 @@ type Diff struct {
 }
 
 func (diff *Diff) tagPath(path string, changeType Op) {
-	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", changeType, path)
+	if debug {
+		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", changeType, path)
+	}
 	fileNode := diff.find(path, changeType == OpCreate)
 	if changeType == OpDelete {
 		if fileNode.Original == nil {
@@ -150,8 +154,10 @@ func (node *Node) verifyDelete(path string) {
 }
 
 func (diff *Diff) rename(from string, to string) {
-	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", "rename", from)
-	fmt.Fprintf(os.Stdout, "TRACE %10v %v\n", "rename_to", to)
+	if debug {
+		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", "rename", from)
+		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", "rename_to", to)
+	}
 	fromNode := diff.find(from, false)
 	delete(fromNode.Parent.Children, fromNode.Name)
 	if fromNode.Original != nil {
@@ -200,7 +206,9 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 				newOriginal := original.Children[part]
 				if newOriginal == nil {
 					if !isNew || i < len(parts)-1 {
-						fmt.Fprintf(os.Stderr, "ACK %v %v %v %v %v\n", original, isNew, path, part, newOriginal)
+						if debug {
+							fmt.Fprintf(os.Stderr, "[DEBUG] ACK %v %v %v %v %v\n", original, isNew, path, part, newOriginal)
+						}
 						// Was meant to already exist, so make sure it did!
 						original.Children[part] = &Node{}
 						newOriginal = original.Children[part]
@@ -235,14 +243,19 @@ func (diff *Diff) Changes() []string {
 	oldFiles := make(map[string]*Node)
 	changes(&diff.New, "", newFiles)
 	changes(&diff.Original, "", oldFiles)
-	fmt.Fprintf(os.Stderr, "new: %v\n%v\n", newFiles, &diff.New)
-	fmt.Fprintf(os.Stderr, "old: %v\n%v\n", oldFiles, &diff.Original)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] new: %v\n[DEBUG] %v\n", newFiles, &diff.New)
+		fmt.Fprintf(os.Stderr, "[DEBUG] old: %v\n[DEBUG] %v\n", oldFiles, &diff.Original)
+	}
 	var ret []string
 	for name, node := range oldFiles {
 		if newFiles[name] != nil && node.ChangeType == OpUnspec {
 			if node.Children == nil {
 				// TODO diff equality only
 				ret = append(ret, fmt.Sprintf("%10v: %v", OpModify, name))
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", OpModify, name, newFiles[name], node)
+				}
 			}
 			delete(newFiles, name)
 		} else {
@@ -251,20 +264,32 @@ func (diff *Diff) Changes() []string {
 			}
 			if (node.ChangeType == OpDelete || node.ChangeType == OpRename) && newFiles[name] != nil && newFiles[name].ChangeType == OpCreate {
 				ret = append(ret, fmt.Sprintf("%10v: %v", OpModify, name))
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (OpDelete||OpRename): %10v: %v\n", OpModify, name)
+				}
 				delete(newFiles, name)
 			} else {
 				//fmt.Fprintf(os.Stderr, "DEBUG DEBUG %v %v %v\n ", node.ChangeType, newFiles[name], name)
 				ret = append(ret, fmt.Sprintf("%10v: %v", node.ChangeType, name))
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %10v: %v\n", node.ChangeType, name)
+				}
 			}
 		}
 	}
 	for name := range newFiles {
 		ret = append(ret, fmt.Sprintf("%10v: %v", OpCreate, name))
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG] appended (new): %10v: %v\n", OpCreate, name)
+		}
 	}
 	return ret
 }
 
 func changes(node *Node, prefix string, ret map[string]*Node) {
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] changes(%v, %v)\n", node.Name, prefix)
+	}
 	newPrefix := prefix + node.Name
 	if (newPrefix != "") {
 		ret[newPrefix] = node
@@ -310,7 +335,9 @@ func readCommand(input *bufio.Reader) (*Command, error) {
 	if cmdType < 0 || cmdType > C.BTRFS_SEND_C_MAX {
 		return nil, fmt.Errorf("Stream contains invalid command type %v", cmdType)
 	}
-	fmt.Fprintf(os.Stdout, "Cmd %v; type %v\n", cmdData, cmdType)
+	if debug {
+		fmt.Fprintf(os.Stdout, "[DEBUG] Cmd %v; type %v\n", cmdData, cmdType)
+	}
 	return &Command{
 		Type: &commands[cmdType],
 		body: cmdData,
@@ -374,17 +401,23 @@ func doReadStream(stream *os.File, diff *Diff) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(os.Stdout, "TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
+			if debug {
+				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
+			}
 			diff.rename(fromPath, toPath)
 		} else if command.Type.Op == OpEnd {
-			fmt.Fprintf(os.Stderr, "END\n")
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG] END\n")
+			}
 			break
 		} else {
 			path, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(os.Stdout, "TRACE %25v %v\n", command.Type.Name, path)
+			if debug {
+				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v\n", command.Type.Name, path)
+			}
 			diff.tagPath(path, command.Type.Op)
 		}
 	}
@@ -394,6 +427,9 @@ func doReadStream(stream *os.File, diff *Diff) error {
 func getSubvolUid(path string) (C.__u64, error) {
 	var sus C.struct_subvol_uuid_search
 	var subvol_info *C.struct_subvol_info
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] opening path '%s'\n", path)
+	}
 	root_f, err := os.OpenFile(path, os.O_RDONLY, 0777)
 	if err != nil {
 		return 0, fmt.Errorf("open returned %v\n", err)
@@ -411,6 +447,9 @@ func getSubvolUid(path string) (C.__u64, error) {
 
 func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	defer stream.Close()
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] opening subvolume '%s'\n", subvolume)
+	}
 	subvol_f, err := os.OpenFile(subvolume, os.O_RDONLY, 0777)
 	if err != nil {
 		return fmt.Errorf("open returned %v\n", err)
@@ -420,7 +459,9 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 		fmt.Fprintf(os.Stderr, "getSubvolUid returns %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stderr, "root_id %v\n", root_id)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] root_id %v\n", root_id)
+	}
 	var subvol_fd C.uint = C.uint(subvol_f.Fd())
 	var opts C.struct_btrfs_ioctl_send_args
 	opts.send_fd = C.__s64(stream.Fd())
@@ -519,6 +560,12 @@ func main() {
 	} else {
 		parent, _ = filepath.Abs(os.Args[1])
 		child, _ = filepath.Abs(os.Args[2])
+		if (len(os.Args) == 4 && os.Args[1] == "--debug") {
+			fmt.Println("Debug enabled")
+			debug = true
+			parent, _ = filepath.Abs(os.Args[2])
+			child, _ = filepath.Abs(os.Args[3])
+		}
 
 		p_stat, p_err := os.Stat(parent)
 		if p_err != nil {
