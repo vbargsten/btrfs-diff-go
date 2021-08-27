@@ -1,3 +1,10 @@
+//+build linux
+
+// to build it run :
+//   GOOS=linux GOARCH=amd64 go build -a -v btrfs-diff.go
+// it requires: golang and libbtrfs-dev, so on GNU Linux/Debian do :
+//   sudo apt install golang libbtrfs-dev
+
 package main
 
 // We get the constants from this header.
