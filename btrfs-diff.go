@@ -264,7 +264,9 @@ func (diff *Diff) Changes() []string {
 
 func changes(node *Node, prefix string, ret map[string]*Node) {
 	newPrefix := prefix + node.Name
-	ret[newPrefix] = node
+	if (newPrefix != "") {
+		ret[newPrefix] = node
+	}
 	if node.ChangeType == OpCreate {
 		// TODO diff equality only
 		return
