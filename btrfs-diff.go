@@ -412,14 +412,24 @@ func doReadStream(stream *os.File, diff *Diff) error {
 			}
 			break
 		} else {
+			var thepath string
 			path, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
-				return err
+				if err.Error() != "Expect type 15; got 18" {
+					return err
+				}
+				path, err := command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
+				if err != nil {
+					return err
+				}
+				thepath = path
+			} else {
+				thepath = path
 			}
 			if debug {
-				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v\n", command.Type.Name, path)
+				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v\n", command.Type.Name, thepath)
 			}
-			diff.tagPath(path, command.Type.Op)
+			diff.tagPath(thepath, command.Type.Op)
 		}
 	}
 	return nil
