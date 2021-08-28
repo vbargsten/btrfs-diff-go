@@ -594,7 +594,9 @@ func main() {
 	if (len(os.Args) <= 2 || os.Args[1] == "-h" || os.Args[1] == "--help") {
 		usage(path.Base(os.Args[0]))
 	} else {
-		if (len(os.Args) == 4 && os.Args[1] == "--debug") {
+		first = os.Args[1]
+		second = os.Args[2]
+		if (len(os.Args) == 4 && first == "--debug") {
 			fmt.Println("[DEBUG] Debug enabled")
 			debug = true
 			first = os.Args[2]
