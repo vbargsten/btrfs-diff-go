@@ -253,10 +253,17 @@ func (diff *Diff) Changes() []string {
 	for name, node := range oldFiles {
 		if newFiles[name] != nil && node.ChangeType == OpUnspec {
 			if node.Children == nil {
-				// TODO diff equality only
-				ret = append(ret, fmt.Sprintf("%10v: %v", OpModify, name))
-				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", OpModify, name, newFiles[name], node)
+				// specific case when there might be an empty change detected on the root of the subvolume
+				if name == "/" && newFiles[name].Name == "" {
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, OpUnspec, newFiles[name])
+					}
+				} else {
+					// TODO diff equality only
+					ret = append(ret, fmt.Sprintf("%10v: %v", OpModify, name))
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", OpModify, name, newFiles[name], node)
+					}
 				}
 			}
 			delete(newFiles, name)
