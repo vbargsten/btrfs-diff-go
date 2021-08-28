@@ -305,6 +305,13 @@ func changes(node *Node, prefix string, ret map[string]*Node) {
 }
 
 func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
+	if n > input.Buffered() {
+		if debug {
+			fmt.Fprintf(os.Stdout, "[DEBUG] peekAndDiscard() need to read more bytes '%v' than there are buffered '%v'\n", n, input.Buffered())
+			fmt.Fprintf(os.Stdout, "[DEBUG] peekAndDiscard() increasing the buffer size to match the need\n")
+		}
+		input = bufio.NewReaderSize(input, n)
+	}
 	data, err := input.Peek(n)
 	if err != nil {
 		return nil, err
