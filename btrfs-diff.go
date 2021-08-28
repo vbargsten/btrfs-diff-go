@@ -183,13 +183,14 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 	parts := strings.Split(path, "/")
 	current := &diff.New
 	for i, part := range parts {
+		node_name := strings.Trim(part, "\x00")
 		if current.Children == nil {
 			current.Children = make(map[string]*Node)
 		}
-		newNode := current.Children[part]
+		newNode := current.Children[node_name]
 		if newNode == nil {
-			current.Children[part] = &Node{}
-			newNode = current.Children[part]
+			current.Children[node_name] = &Node{}
+			newNode = current.Children[node_name]
 			original := current.Original
 			if original == nil {
 				if !(isNew && i == len(parts)-1) {
@@ -204,22 +205,22 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 				if original.Children == nil {
 					original.Children = make(map[string]*Node)
 				}
-				newOriginal := original.Children[part]
+				newOriginal := original.Children[node_name]
 				if newOriginal == nil {
 					if !isNew || i < len(parts)-1 {
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG] ACK %v %v %v %v %v\n", original, isNew, path, part, newOriginal)
+							fmt.Fprintf(os.Stderr, "[DEBUG] ACK %v %v %v %v %v\n", original, isNew, path, node_name, newOriginal)
 						}
 						// Was meant to already exist, so make sure it did!
-						original.Children[part] = &Node{}
-						newOriginal = original.Children[part]
-						newOriginal.Name = part
+						original.Children[node_name] = &Node{}
+						newOriginal = original.Children[node_name]
+						newOriginal.Name = node_name
 						newOriginal.Parent = original
 						newNode.Original = newOriginal
 					}
 				}
 			}
-			newNode.Name = part
+			newNode.Name = node_name
 			newNode.Parent = current
 		} else if isNew && i == len(parts)-1 {
 			// As this is the target of a create, we should expect to see
