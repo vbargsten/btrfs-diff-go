@@ -337,7 +337,7 @@ func readCommand(input *bufio.Reader) (*Command, error) {
 		return nil, fmt.Errorf("Stream contains invalid command type %v", cmdType)
 	}
 	if debug {
-		fmt.Fprintf(os.Stdout, "[DEBUG] Cmd %v; type %v\n", cmdData, cmdType)
+		fmt.Fprintf(os.Stdout, "[DEBUG] Cmd %v; type %v\n", cmdData, commands[cmdType].Name)
 	}
 	return &Command{
 		Type: &commands[cmdType],
