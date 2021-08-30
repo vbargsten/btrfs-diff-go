@@ -30,6 +30,7 @@ if [ -d "$SNAPS_DIR" ]; then
         $use_sudo btrfs subvolume delete "$snap" > /dev/null
     done
 fi
+rm -f /tmp/a_raw /tmp/a /tmp/b /tmp/b_diff /tmp/diff
 
 echo "-- Creating a subvolume that will contains the data: '$DATA_DIR' (read-write)"
 btrfs subvolume create "$DATA_DIR" > /dev/null
@@ -95,5 +96,37 @@ done
 if [ "$failed" = 'false' ]; then
     echo "SUCCESS"
 else
+    echo "FAIL"
     exit 1
 fi
+
+echo "-- Now testing against a tricky stream file ..."
+# from: https://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git/tree/tests/misc-tests/016-send-clone-src
+#       'multi-clone-src-v4.8.2.stream.xz' has been extracted and 'multi-clone-src-v4.8.2.stream' renamed to 'test.data'
+failed=true
+if ! "$BTRFS_DIFF_BIN" --file "$THIS_DIR"/test.data >/tmp/diff.out; then
+    cat > /tmp/diff.src <<ENDCAT
+   deleted: /file2_1
+     added: /file1_1
+     added: /file1_2
+ENDCAT
+    if diff /tmp/diff.out /tmp/diff.src; then
+        failed=false
+    fi
+fi
+if [ "$failed" = 'false' ]; then
+    echo "SUCCESS"
+else
+    echo "FAIL"
+    exit 1
+fi
+
+# cleanup
+echo "-- Removing existing data and snapshots"
+[ -d "$DATA_DIR" ] && $use_sudo btrfs subvolume delete "$DATA_DIR" > /dev/null
+if [ -d "$SNAPS_DIR" ]; then
+    [ -n "$(ls "$SNAPS_DIR")" ] && for snap in "$SNAPS_DIR"/*; do
+        $use_sudo btrfs subvolume delete "$snap" > /dev/null
+    done
+fi
+rm -f /tmp/a_raw /tmp/a /tmp/b /tmp/b_diff /tmp/diff
