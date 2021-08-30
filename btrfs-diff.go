@@ -5,7 +5,7 @@
 // it requires: golang and libbtrfs-dev, so on GNU Linux/Debian do :
 //   sudo apt install golang libbtrfs-dev
 
-package main
+package btrfs_diff
 
 // We get the constants from this header.
 
@@ -613,7 +613,7 @@ SEE ALSO
 `, progname)
 }
 
-func main() {
+func Process() {
 	var first string
 	var second string
 	if (len(os.Args) <= 2 || os.Args[1] == "-h" || os.Args[1] == "--help") {
@@ -693,4 +693,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func main() {
+	Process()
 }
