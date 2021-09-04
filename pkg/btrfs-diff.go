@@ -441,7 +441,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				if err.Error() != "Expect type 15; got 18" {
 					return err
 				}
-				path, err := command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
+				path, err = command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
 				if err != nil {
 					return err
 				}
