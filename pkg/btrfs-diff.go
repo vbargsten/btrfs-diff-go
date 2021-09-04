@@ -408,7 +408,8 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 		return fmt.Errorf("unexpected stream version %v", ver)
 	}
 	for {
-		command, err := readCommand(input)
+		var command *commandInst
+		command, err = readCommand(input)
 		if err != nil {
 			return err
 		}
@@ -417,11 +418,13 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 		} else if command.Type.Op == opIgnore {
 			continue
 		} else if command.Type.Op == opRename {
-			fromPath, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
+			var fromPath string
+			var toPath string
+			fromPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				return err
 			}
-			toPath, err := command.ReadParam(C.BTRFS_SEND_A_PATH_TO)
+			toPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH_TO)
 			if err != nil {
 				return err
 			}
@@ -435,8 +438,8 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			}
 			break
 		} else {
-			var thepath string
-			path, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
+			var path string
+			path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				if err.Error() != "Expect type 15; got 18" {
 					return err
@@ -445,14 +448,11 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				if err != nil {
 					return err
 				}
-				thepath = path
-			} else {
-				thepath = path
 			}
 			if debug {
-				fmt.Printf("[DEBUG] TRACE %25v %v\n", command.Type.Name, thepath)
+				fmt.Printf("[DEBUG] TRACE %25v %v\n", command.Type.Name, path)
 			}
-			diff.tagPath(thepath, command.Type.Op)
+			diff.tagPath(path, command.Type.Op)
 		}
 	}
 	return nil
