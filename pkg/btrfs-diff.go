@@ -120,7 +120,7 @@ type diffInst struct {
 
 func (diff *diffInst) tagPath(path string, changeType operation) {
 	if debug {
-		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", changeType, path)
+		fmt.Printf("[DEBUG] TRACE %10v %v\n", changeType, path)
 	}
 	fileNode := diff.find(path, changeType == opCreate)
 	if changeType == opDelete {
@@ -156,8 +156,8 @@ func (node *nodeInst) verifyDelete(path string) {
 
 func (diff *diffInst) rename(from string, to string) {
 	if debug {
-		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", "rename", from)
-		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", "rename_to", to)
+		fmt.Printf("[DEBUG] TRACE %10v %v\n", "rename", from)
+		fmt.Printf("[DEBUG] TRACE %10v %v\n", "rename_to", to)
 	}
 	fromNode := diff.find(from, false)
 	delete(fromNode.Parent.Children, fromNode.Name)
@@ -315,8 +315,8 @@ func changes(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
 	if n > input.Buffered() {
 		if debug {
-			fmt.Fprintf(os.Stdout, "[DEBUG] peekAndDiscard() need to read more bytes '%v' than there are buffered '%v'\n", n, input.Buffered())
-			fmt.Fprintf(os.Stdout, "[DEBUG] peekAndDiscard() increasing the buffer size to match the need\n")
+			fmt.Printf("[DEBUG] peekAndDiscard() need to read more bytes '%v' than there are buffered '%v'\n", n, input.Buffered())
+			fmt.Printf("[DEBUG] peekAndDiscard() increasing the buffer size to match the need\n")
 		}
 		input = bufio.NewReaderSize(input, n)
 	}
@@ -352,7 +352,7 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 		return nil, fmt.Errorf("Stream contains invalid command type %v", cmdType)
 	}
 	if debug {
-		fmt.Fprintf(os.Stdout, "[DEBUG] Cmd %v; type %v\n", cmdData, commandsDefs[cmdType].Name)
+		fmt.Printf("[DEBUG] Cmd %v; type %v\n", cmdData, commandsDefs[cmdType].Name)
 	}
 	return &commandInst{
 		Type: &commandsDefs[cmdType],
@@ -418,7 +418,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				return err
 			}
 			if debug {
-				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
+				fmt.Printf("[DEBUG] TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
 			}
 			diff.rename(fromPath, toPath)
 		} else if command.Type.Op == opEnd {
@@ -442,7 +442,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				thepath = path
 			}
 			if debug {
-				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v\n", command.Type.Name, thepath)
+				fmt.Printf("[DEBUG] TRACE %25v %v\n", command.Type.Name, thepath)
 			}
 			diff.tagPath(thepath, command.Type.Op)
 		}
@@ -524,7 +524,7 @@ func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 
 func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	if debug {
-		fmt.Fprintf(os.Stdout, "[DEBUG] opening file '%v'\n", streamfile)
+		fmt.Printf("[DEBUG] opening file '%v'\n", streamfile)
 	}
 	f, err := os.Open(streamfile)
 	if err != nil {

@@ -119,7 +119,7 @@ func main() {
 		if len(changes) > 0 {
 
 			// print changes
-			fmt.Fprintf(os.Stdout, "%v\n", strings.Join(changes, "\n"))
+			fmt.Printf("%v\n", strings.Join(changes, "\n"))
 
 			// exit 1 if there are differences
 			os.Exit(1)
