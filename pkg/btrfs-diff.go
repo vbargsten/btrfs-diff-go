@@ -105,17 +105,17 @@ func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
 
 var commandsDefs *[C.__BTRFS_SEND_C_MAX]commandType = initCommandsDefinitions()
 
-type Node struct {
-	Children   map[string]*Node
+type nodeInst struct {
+	Children   map[string]*nodeInst
 	Name       string
 	ChangeType operation
-	Parent     *Node
-	Original   *Node
+	Parent     *nodeInst
+	Original   *nodeInst
 }
 
 type Diff struct {
-	Original Node
-	New      Node
+	Original nodeInst
+	New      nodeInst
 }
 
 func (diff *Diff) tagPath(path string, changeType operation) {
@@ -146,7 +146,7 @@ func (diff *Diff) tagPath(path string, changeType operation) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (node *Node) verifyDelete(path string) {
+func (node *nodeInst) verifyDelete(path string) {
 	for _, child := range node.Children {
 		if child.ChangeType != opDelete && child.ChangeType != opRename {
 			fmt.Fprintf(os.Stderr, "deleting parent of node %v in %v which is not gone", node, path)
@@ -173,7 +173,7 @@ func (diff *Diff) rename(from string, to string) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (diff *Diff) find(path string, isNew bool) *Node {
+func (diff *Diff) find(path string, isNew bool) *nodeInst {
 	if diff.New.Original == nil {
 		diff.New.Original = &diff.Original
 	}
@@ -185,11 +185,11 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 	for i, part := range parts {
 		node_name := strings.Trim(part, "\x00")
 		if current.Children == nil {
-			current.Children = make(map[string]*Node)
+			current.Children = make(map[string]*nodeInst)
 		}
 		newNode := current.Children[node_name]
 		if newNode == nil {
-			current.Children[node_name] = &Node{}
+			current.Children[node_name] = &nodeInst{}
 			newNode = current.Children[node_name]
 			original := current.Original
 			if original == nil {
@@ -203,7 +203,7 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 				}
 			} else {
 				if original.Children == nil {
-					original.Children = make(map[string]*Node)
+					original.Children = make(map[string]*nodeInst)
 				}
 				newOriginal := original.Children[node_name]
 				if newOriginal == nil {
@@ -212,7 +212,7 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 							fmt.Fprintf(os.Stderr, "[DEBUG] ACK %v %v %v %v %v\n", original, isNew, path, node_name, newOriginal)
 						}
 						// Was meant to already exist, so make sure it did!
-						original.Children[node_name] = &Node{}
+						original.Children[node_name] = &nodeInst{}
 						newOriginal = original.Children[node_name]
 						newOriginal.Name = node_name
 						newOriginal.Parent = original
@@ -232,7 +232,7 @@ func (diff *Diff) find(path string, isNew bool) *Node {
 	return current
 }
 
-func (node *Node) String() string {
+func (node *nodeInst) String() string {
 	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.ChangeType, node.Name)
 }
 
@@ -241,8 +241,8 @@ func (diff *Diff) String() string {
 }
 
 func (diff *Diff) Changes() []string {
-	newFiles := make(map[string]*Node)
-	oldFiles := make(map[string]*Node)
+	newFiles := make(map[string]*nodeInst)
+	oldFiles := make(map[string]*nodeInst)
 	changes(&diff.New, "", newFiles)
 	changes(&diff.Original, "", oldFiles)
 	if debug {
@@ -295,7 +295,7 @@ func (diff *Diff) Changes() []string {
 	return ret
 }
 
-func changes(node *Node, prefix string, ret map[string]*Node) {
+func changes(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] changes(%v, %v)\n", node.Name, prefix)
 	}
