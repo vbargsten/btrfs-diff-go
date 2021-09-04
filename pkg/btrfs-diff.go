@@ -382,7 +382,14 @@ func readStream(stream *os.File, diff *diffInst, channel chan error) {
 }
 
 func doReadStream(stream *os.File, diff *diffInst) error {
-	defer stream.Close()
+	// ensure that we catch the error from stream.Close()
+	var err error
+	defer func() {
+		cerr := stream.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
 	input := bufio.NewReader(stream)
 	btrfsStreamHeader, err := input.ReadString('\x00')
 	if err != nil {
@@ -472,7 +479,14 @@ func getSubVolUID(path string) (C.__u64, error) {
 }
 
 func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
-	defer stream.Close()
+	// ensure that we catch the error from stream.Close()
+	var err error
+	defer func() {
+		cerr := stream.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] opening subvolume '%s'\n", subvolume)
 	}
@@ -530,7 +544,14 @@ func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open returned %v", err)
 	}
-	defer f.Close()
+
+	// ensure that we catch the error from f.Close()
+	defer func() {
+		cerr := f.Close()
+		if err == nil {
+			err = cerr
+		}
+	}()
 
 	var diff diffInst = diffInst{}
 	channel := make(chan error)
