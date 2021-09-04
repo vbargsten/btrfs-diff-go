@@ -27,7 +27,7 @@ jobs:
       matrix:
         go: [ '1.14', '1.15', '1.16' ]
 
-    name: Go ${{ matrix.go }} analysis and build
+    name: Go ${{ matrix.go }} build
 
     steps:
 
@@ -44,29 +44,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      # Install required packages dependencies
-      - name: Install required packages dependencies
-        run: |
-          go get -u \
-            github.com/kisielk/errcheck \
-            golang.org/x/tools/cmd/goimports \
-            golang.org/x/lint/golint \
-            github.com/securego/gosec/cmd/gosec \
-            golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow \
-            honnef.co/go/tools/cmd/staticcheck
-
-      # Download go modules
-      - run: go mod download
-
-      # Static analysis checks
-      - run: golint -set_exit_status ./...
-      - run: gofmt -l -s .
-      - run: errcheck ./...
-      - run: goimports -l .
-      - run: go vet ./...
-      - run: go vet -vettool=/go/bin/shadow ./...
-      - run: gosec -out result.txt ./...
-      - run: staticcheck ./...
-
       # Build the binary
-      - run: go build -v
+      - name: Building the binary
+        run: go build -v
