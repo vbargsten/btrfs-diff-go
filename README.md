@@ -3,7 +3,8 @@
 Analyze differences between two BTRFS snapshots (like
 [GNU diff](https://www.gnu.org/software/diffutils/manual/) for directories).
 
-It is a single GO script of ~ 620 lines of code (without blanks and comments).
+It is a single GO script (package) of ~ 540 lines of code (without blanks and comments), plus a main
+script (binary) of 95 loc.
 
 ![Release](https://img.shields.io/github/v/release/mbideau/btrfs-diff-go)
 ![Release Date](https://img.shields.io/github/release-date/mbideau/btrfs-diff-go)  
@@ -85,13 +86,13 @@ SEE ALSO
 
 ## Installation
 
-### Using `go get` command
-
-Install the required dependencies (example for *Debian* / *Ubuntu*)
+First, install the required dependencies (example for *Debian* / *Ubuntu*)
 
 ```sh
-~> sudo apt install golang
+~> sudo apt install golang libbtrfs-dev
 ```
+
+### Using `go get` command
 
 Use the convenient `go get` :
 
@@ -99,22 +100,29 @@ Use the convenient `go get` :
 ~> sudo go get https://github.com/mbideau/btrfs-diff-go
 ```
 
+That will create a binary named _btrfs-diff-go_ in `$GOPATH/bin`.
+
 ### Building from the sources
-
-Install the required dependencies (example for *Debian* / *Ubuntu*)
-
-```sh
-~> sudo apt install golang libbtrfs-dev
-```
 
 Clone the repository, run the build then install it
 
 ```sh
 ~> git clone -q https://github.com/mbideau/btrfs-diff-go.git
 ~> cd btrfs-diff-go
-~> GOOS=linux GOARCH=amd64 go build -v btrfs-diff.go
-~> sudo go install
+~> go build -v
+~> go install
 ```
+
+### Copy the binary to `/usr/local/bin` to make it available system wide
+
+And rename it to `btrfs-diff`, if you don't care about the implementation language.
+
+```sh
+~> [ "$GOPATH" != '' ] || GOPATH="$HOME/go"
+~> sudo cp $GOPATH/bin/btrfs-diff-go /usr/local/bin/btrfs-diff
+~> sudo chmod +x /usr/local/bin/btrfs-diff
+```
+
 
 ## Fast diff between BTRFS snapshots
 
@@ -138,7 +146,7 @@ I wanted a differences file format like the one you have when doing `diff -rq` o
 `git status --goort`, in short: a human friendly one.
 
 I looked at the prior art (see below), but nothing were satisfying enough, so I rolled my own
-diff utility (which just produce the stream with `btrfs send` and then parse it).
+diff utility (which produce the stream with `btrfs send` and then parse it).
 
 ### Prior art analysis
 
@@ -185,7 +193,7 @@ Here it is. Way faster than the shell version. Not measured yet (it's a feeling)
 
 Cool features implemented :
 
-* can produce the raw diff from two snapshots or just parse a raw stream file
+* can produce the raw diff from two snapshots or parse a raw stream file
 * produces an output close to the `diff -rq` utility and `git status --goort`
 * fast
 
@@ -208,10 +216,10 @@ accept changes through *Pull Request*.
 
 ## Developing
 
-Do your changes, then, in the source directory, just run :  
+Do your changes, then, in the source directory, run :  
 
 ```sh
-~> GOOS=linux GOARCH=amd64 go build btrfs-diff.go
+~> go build -v
 ```
 
 ## Testing
@@ -232,7 +240,6 @@ It is very raw but it test already a lot of cases.
 
 By order of priority :
 
-* [ ] add a buid Github action
 * [ ] customize the Github *test* action to have a btrfs filesystem (in a file and mounted to a
   writable path)
 * [ ] add a *test: pass* badge when the test will be able to pass
