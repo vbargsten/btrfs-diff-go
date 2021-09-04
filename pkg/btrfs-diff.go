@@ -458,15 +458,15 @@ func getSubVolUID(path string) (C.__u64, error) {
 	}
 	subvolDir, err := os.OpenFile(path, os.O_RDONLY, 0777)
 	if err != nil {
-		return 0, fmt.Errorf("open returned %v\n", err)
+		return 0, fmt.Errorf("open returned %v", err)
 	}
 	r := C.subvol_uuid_search_init(C.int(subvolDir.Fd()), &sus)
 	if r < 0 {
-		return 0, fmt.Errorf("subvol_uuid_search_init returned %v\n", r)
+		return 0, fmt.Errorf("subvol_uuid_search_init returned %v", r)
 	}
 	subvolInfo, err = C.subvol_uuid_search(&sus, 0, nil, 0, C.CString(path), C.subvol_search_by_path)
 	if subvolInfo == nil {
-		return 0, fmt.Errorf("subvol_uuid_search returned %v\n", err)
+		return 0, fmt.Errorf("subvol_uuid_search returned %v", err)
 	}
 	return C.__u64(subvolInfo.root_id), nil
 }
@@ -478,7 +478,7 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	}
 	subvol_f, err := os.OpenFile(subvolume, os.O_RDONLY, 0777)
 	if err != nil {
-		return fmt.Errorf("open returned %v\n", err)
+		return fmt.Errorf("open returned %v", err)
 	}
 	root_id, err := getSubVolUID(source)
 	if err != nil {
@@ -505,7 +505,7 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 	read, write, err := os.Pipe()
 	if err != nil {
-		return nil, fmt.Errorf("pipe returned %v\n", err)
+		return nil, fmt.Errorf("pipe returned %v", err)
 	}
 
 	var diff diffInst = diffInst{}
@@ -513,11 +513,11 @@ func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 	go readStream(read, &diff, channel)
 	err = btrfsSendSyscall(write, source, subvolume)
 	if err != nil {
-		return nil, fmt.Errorf("btrfsSendSyscall returns %v\n", err)
+		return nil, fmt.Errorf("btrfsSendSyscall returns %v", err)
 	}
 	err = <-channel
 	if err != nil {
-		return nil, fmt.Errorf("readStream returns %v\n", err)
+		return nil, fmt.Errorf("readStream returns %v", err)
 	}
 	return &diff, nil
 }
@@ -528,7 +528,7 @@ func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	}
 	f, err := os.Open(streamfile)
 	if err != nil {
-		return nil, fmt.Errorf("open returned %v\n", err)
+		return nil, fmt.Errorf("open returned %v", err)
 	}
 	defer f.Close()
 
@@ -536,11 +536,11 @@ func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	channel := make(chan error)
 	go readStream(f, &diff, channel)
 	if err != nil {
-		return nil, fmt.Errorf("btrfsGetSyscall returns %v\n", err)
+		return nil, fmt.Errorf("btrfsGetSyscall returns %v", err)
 	}
 	err = <-channel
 	if err != nil && err != io.EOF {
-		return nil, fmt.Errorf("readStream returns %v\n", err)
+		return nil, fmt.Errorf("readStream returns %v", err)
 	}
 	return &diff, nil
 }
@@ -551,14 +551,14 @@ func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) 
 		return nil, err
 	}
 	if ! p_stat.IsDir() {
-		return nil, fmt.Errorf("Error: '%s' is not a directory\n", parent)
+		return nil, fmt.Errorf("Error: '%s' is not a directory", parent)
 	}
 	c_stat, err := os.Stat(child)
 	if err != nil {
 		return nil, err
 	}
 	if ! c_stat.IsDir() {
-		return nil, fmt.Errorf("Error: '%s' is not a directory\n", child)
+		return nil, fmt.Errorf("Error: '%s' is not a directory", child)
 	}
 	diff, err := btrfsSendDiff(parent, child)
 	if err != nil {
@@ -573,7 +573,7 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 		return nil, err
 	}
 	if ! f_stat.Mode().IsRegular() {
-		return nil, fmt.Errorf("Error: '%s' is not a file\n", streamfile)
+		return nil, fmt.Errorf("Error: '%s' is not a file", streamfile)
 	}
 	diff, err := btrfsStreamFileDiff(streamfile)
 	if err != nil {
