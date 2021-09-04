@@ -456,11 +456,11 @@ func getSubVolUID(path string) (C.__u64, error) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] opening path '%s'\n", path)
 	}
-	root_f, err := os.OpenFile(path, os.O_RDONLY, 0777)
+	subvolDir, err := os.OpenFile(path, os.O_RDONLY, 0777)
 	if err != nil {
 		return 0, fmt.Errorf("open returned %v\n", err)
 	}
-	r := C.subvol_uuid_search_init(C.int(root_f.Fd()), &sus)
+	r := C.subvol_uuid_search_init(C.int(subvolDir.Fd()), &sus)
 	if r < 0 {
 		return 0, fmt.Errorf("subvol_uuid_search_init returned %v\n", r)
 	}
