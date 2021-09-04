@@ -339,7 +339,8 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 	if err != nil {
 		return nil, fmt.Errorf("short read on command type: %v", err)
 	}
-	if _, err := peekAndDiscard(input, 4); err != nil {
+	_, err = peekAndDiscard(input, 4)
+	if err != nil {
 		return nil, fmt.Errorf("short read on command checksum: %v", err)
 	}
 	cmdSize := binary.LittleEndian.Uint32(cmdSizeB)
