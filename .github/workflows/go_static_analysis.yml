@@ -53,7 +53,8 @@ jobs:
             golang.org/x/lint/golint \
             github.com/securego/gosec/cmd/gosec \
             golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow \
-            honnef.co/go/tools/cmd/staticcheck
+            honnef.co/go/tools/cmd/staticcheck \
+            github.com/gordonklaus/ineffassign
 
       # Static analysis checks
       - name: Linting (golint)
@@ -79,3 +80,6 @@ jobs:
 
       - name: Static analysis (staticcheck)
         run: staticcheck ./...
+
+      - name: Ineffectual assignments (ineffassign)
+        run: ineffassign ./...
