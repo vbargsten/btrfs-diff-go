@@ -16,14 +16,14 @@ package btrfsdiff
 import "C"
 
 import (
-	"os"
-	"encoding/binary"
 	"bufio"
+	"encoding/binary"
 	"fmt"
-	"unsafe"
-	"syscall"
-	"strings"
 	"io"
+	"os"
+	"strings"
+	"syscall"
+	"unsafe"
 )
 
 // NAUGHTYNESS:
@@ -300,7 +300,7 @@ func changes(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 		fmt.Fprintf(os.Stderr, "[DEBUG] changes(%v, %v)\n", node.Name, prefix)
 	}
 	newPrefix := prefix + node.Name
-	if (newPrefix != "") {
+	if newPrefix != "" {
 		ret[newPrefix] = node
 	}
 	if node.ChangeType == opCreate {
@@ -551,14 +551,14 @@ func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) 
 	if err != nil {
 		return nil, err
 	}
-	if ! parentStat.IsDir() {
+	if !parentStat.IsDir() {
 		return nil, fmt.Errorf("Error: '%s' is not a directory", parent)
 	}
 	childStat, err := os.Stat(child)
 	if err != nil {
 		return nil, err
 	}
-	if ! childStat.IsDir() {
+	if !childStat.IsDir() {
 		return nil, fmt.Errorf("Error: '%s' is not a directory", child)
 	}
 	diff, err := btrfsSendDiff(parent, child)
@@ -574,7 +574,7 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ! fileStat.Mode().IsRegular() {
+	if !fileStat.Mode().IsRegular() {
 		return nil, fmt.Errorf("Error: '%s' is not a file", streamfile)
 	}
 	diff, err := btrfsStreamFileDiff(streamfile)
