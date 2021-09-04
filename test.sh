@@ -5,7 +5,12 @@ set -e
 THIS_DIR="$(realpath "$(dirname "$0")")"
 
 BTRFS_DIFF_BIN="$THIS_DIR"/btrfs-diff
-TEST_DIR="$THIS_DIR"/testdir
+if [ "$TMPDIR" = '' ]; then
+    TMPDIR="$THIS_DIR"/.tmp
+fi
+if [ "$TEST_DIR" = '' ]; then
+    TEST_DIR="$THIS_DIR"/testdir
+fi
 DATA_DIR="$TEST_DIR"/data
 SNAPS_DIR="$TEST_DIR"/snaps
 
@@ -30,7 +35,7 @@ if [ -d "$SNAPS_DIR" ]; then
         $use_sudo btrfs subvolume delete "$snap" > /dev/null
     done
 fi
-rm -f /tmp/a_raw /tmp/a /tmp/b /tmp/b_diff /tmp/diff
+rm -f "$TMPDIR"/a_raw "$TMPDIR"/a "$TMPDIR"/b "$TMPDIR"/b_diff "$TMPDIR"/diff "$TMPDIR"/diff.out "$TMPDIR"/diff.src
 
 echo "-- Creating a subvolume that will contains the data: '$DATA_DIR' (read-write)"
 btrfs subvolume create "$DATA_DIR" > /dev/null
@@ -77,18 +82,18 @@ failed=false
 for A in "$SNAPS_DIR"/*; do
     for B in "$SNAPS_DIR"/*; do
         if [ "$A" = "$B" ]; then continue; fi
-        $use_sudo "$BTRFS_DIFF_BIN" "$A" "$B" > /tmp/a_raw 2>&1 || true
-        cut -b4- /tmp/a_raw | sort | grep -v '^changed: $' > /tmp/a || true
+        $use_sudo "$BTRFS_DIFF_BIN" "$A" "$B" > "$TMPDIR"/a_raw 2>&1 || true
+        cut -b4- "$TMPDIR"/a_raw | sort | grep -v '^changed: $' > "$TMPDIR"/a || true
         LC_ALL=C diff -qr "$A" "$B" | \
             sed "s|$A|old|; s|$B|new|g; s|: |/|; s/Only in new/  added: /; s/Only in old/deleted: /; s|Files old/.* and new/\(.*\) differ|changed: /\1|" | \
             sed "/File .* is a fifo while file .* is a fifo/d" | \
-            sort > /tmp/b || true
+            sort > "$TMPDIR"/b || true
         # Filter things that were spuriously added (can happen due to utimes changes and stuff).
         # Then filter only changes (else we spit out headers for the stuff we filtered).
-        if ! LC_ALL=C diff -u5 /tmp/a /tmp/b >/tmp/b_diff && \
-                [ "$(cat -s /tmp/b_diff | grep -v '^-changed' | grep -c '^[+-][^+-]')" -ne 0 ]; then
+        if ! LC_ALL=C diff -u5 "$TMPDIR"/a "$TMPDIR"/b >"$TMPDIR"/b_diff && \
+                [ "$(cat -s "$TMPDIR"/b_diff | grep -v '^-changed' | grep -c '^[+-][^+-]')" -ne 0 ]; then
             echo "FAIL: $A $B" | sed "s|$TEST_DIR/\?||g"
-            cat -s /tmp/b_diff | grep -v '^-changed' | grep '^[+-][^+-]' | sed "s|^|$A $B: |" | sed "s|$TEST_DIR/\?||g"
+            cat -s "$TMPDIR"/b_diff | grep -v '^-changed' | grep '^[+-][^+-]' | sed "s|^|$A $B: |" | sed "s|$TEST_DIR/\?||g"
             failed=true
         fi
     done
@@ -104,13 +109,13 @@ echo "-- Now testing against a tricky stream file ..."
 # from: https://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git/tree/tests/misc-tests/016-send-clone-src
 #       'multi-clone-src-v4.8.2.stream.xz' has been extracted and 'multi-clone-src-v4.8.2.stream' renamed to 'test.data'
 failed=true
-if ! "$BTRFS_DIFF_BIN" --file "$THIS_DIR"/test.data >/tmp/diff.out; then
-    cat > /tmp/diff.src <<ENDCAT
+if ! "$BTRFS_DIFF_BIN" --file "$THIS_DIR"/test.data >"$TMPDIR"/diff.out; then
+    cat > "$TMPDIR"/diff.src <<ENDCAT
    deleted: /file2_1
      added: /file1_1
      added: /file1_2
 ENDCAT
-    if diff /tmp/diff.out /tmp/diff.src; then
+    if diff "$TMPDIR"/diff.out "$TMPDIR"/diff.src; then
         failed=false
     fi
 fi
@@ -129,4 +134,4 @@ if [ -d "$SNAPS_DIR" ]; then
         $use_sudo btrfs subvolume delete "$snap" > /dev/null
     done
 fi
-rm -f /tmp/a_raw /tmp/a /tmp/b /tmp/b_diff /tmp/diff
+rm -f "$TMPDIR"/a_raw "$TMPDIR"/a "$TMPDIR"/b "$TMPDIR"/b_diff "$TMPDIR"/diff "$TMPDIR"/diff.out "$TMPDIR"/diff.src
