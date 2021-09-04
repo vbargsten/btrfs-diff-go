@@ -406,7 +406,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	if ver != 1 {
 		return fmt.Errorf("unexpected stream version %v", ver)
 	}
-	for true {
+	for {
 		command, err := readCommand(input)
 		if err != nil {
 			return err
