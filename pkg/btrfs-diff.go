@@ -333,23 +333,23 @@ func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
 func readCommand(input *bufio.Reader) (*commandInst, error) {
 	cmdSizeB, err := peekAndDiscard(input, 4)
 	if err != nil {
-		return nil, fmt.Errorf("Short read on command size: %v", err)
+		return nil, fmt.Errorf("short read on command size: %v", err)
 	}
 	cmdTypeB, err := peekAndDiscard(input, 2)
 	if err != nil {
-		return nil, fmt.Errorf("Short read on command type: %v", err)
+		return nil, fmt.Errorf("short read on command type: %v", err)
 	}
 	if _, err := peekAndDiscard(input, 4); err != nil {
-		return nil, fmt.Errorf("Short read on command checksum: %v", err)
+		return nil, fmt.Errorf("short read on command checksum: %v", err)
 	}
 	cmdSize := binary.LittleEndian.Uint32(cmdSizeB)
 	cmdData, err := peekAndDiscard(input, int(cmdSize))
 	if err != nil {
-		return nil, fmt.Errorf("Short read on command body: %v", err)
+		return nil, fmt.Errorf("short read on command body: %v", err)
 	}
 	cmdType := binary.LittleEndian.Uint16(cmdTypeB)
 	if cmdType < 0 || cmdType > C.BTRFS_SEND_C_MAX {
-		return nil, fmt.Errorf("Stream contains invalid command type %v", cmdType)
+		return nil, fmt.Errorf("stream contains invalid command type %v", cmdType)
 	}
 	if debug {
 		fmt.Printf("[DEBUG] Cmd %v; type %v\n", cmdData, commandsDefs[cmdType].Name)
@@ -362,15 +362,15 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 
 func (command *commandInst) ReadParam(expectedType int) (string, error) {
 	if len(command.body) < 4 {
-		return "", fmt.Errorf("No more parameters")
+		return "", fmt.Errorf("no more parameters")
 	}
 	paramType := binary.LittleEndian.Uint16(command.body[0:2])
 	if int(paramType) != expectedType {
-		return "", fmt.Errorf("Expect type %v; got %v", expectedType, paramType)
+		return "", fmt.Errorf("expect type %v; got %v", expectedType, paramType)
 	}
 	paramLength := binary.LittleEndian.Uint16(command.body[2:4])
 	if int(paramLength)+4 > len(command.body) {
-		return "", fmt.Errorf("Short command param; length was %v but only %v left", paramLength, len(command.body)-4)
+		return "", fmt.Errorf("short command param; length was %v but only %v left", paramLength, len(command.body)-4)
 	}
 	ret := string(command.body[4 : 4+paramLength])
 	command.body = command.body[4+paramLength:]
@@ -404,7 +404,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	}
 	ver := binary.LittleEndian.Uint32(verB)
 	if ver != 1 {
-		return fmt.Errorf("Unexpected stream version %v", ver)
+		return fmt.Errorf("unexpected stream version %v", ver)
 	}
 	for true {
 		command, err := readCommand(input)
@@ -412,7 +412,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			return err
 		}
 		if command.Type.Op == opUnspec {
-			return fmt.Errorf("Unexpected command %v", command)
+			return fmt.Errorf("unexpected command %v", command)
 		} else if command.Type.Op == opIgnore {
 			continue
 		} else if command.Type.Op == opRename {
@@ -573,14 +573,14 @@ func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) 
 		return nil, err
 	}
 	if !parentStat.IsDir() {
-		return nil, fmt.Errorf("Error: '%s' is not a directory", parent)
+		return nil, fmt.Errorf("'%s' is not a directory", parent)
 	}
 	childStat, err := os.Stat(child)
 	if err != nil {
 		return nil, err
 	}
 	if !childStat.IsDir() {
-		return nil, fmt.Errorf("Error: '%s' is not a directory", child)
+		return nil, fmt.Errorf("'%s' is not a directory", child)
 	}
 	diff, err := btrfsSendDiff(parent, child)
 	if err != nil {
@@ -596,7 +596,7 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 		return nil, err
 	}
 	if !fileStat.Mode().IsRegular() {
-		return nil, fmt.Errorf("Error: '%s' is not a file", streamfile)
+		return nil, fmt.Errorf("'%s' is not a file", streamfile)
 	}
 	diff, err := btrfsStreamFileDiff(streamfile)
 	if err != nil {
