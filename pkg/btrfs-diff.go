@@ -34,27 +34,27 @@ import (
 
 var debug bool = false
 
-type Op int
+type operation int
 
 const (
-	OpUnspec Op = iota
-	OpIgnore
-	OpCreate
-	OpModify
-	OpDelete
-	OpRename // Special cased -- we need two paths
-	OpEnd
+	opUnspec operation = iota
+	opIgnore
+	opCreate
+	opModify
+	opDelete
+	opRename // Special cased -- we need two paths
+	opEnd
 )
 
 var names []string = []string{"!!!", "ignored", "added", "changed", "deleted", "renamed", "END"}
 
-func (op Op) String() string {
+func (op operation) String() string {
 	return names[op]
 }
 
 type CommandSpec struct {
 	Name string
-	Op   Op
+	Op   operation
 }
 
 type Command struct {
@@ -64,39 +64,39 @@ type Command struct {
 
 func initCommands() *[C.__BTRFS_SEND_C_MAX]CommandSpec {
 	var commands [C.__BTRFS_SEND_C_MAX]CommandSpec
-	commands[C.BTRFS_SEND_C_UNSPEC] = CommandSpec{Name: "BTRFS_SEND_C_UNSPEC", Op: OpUnspec}
+	commands[C.BTRFS_SEND_C_UNSPEC] = CommandSpec{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
 
-	commands[C.BTRFS_SEND_C_SUBVOL] = CommandSpec{Name: "BTRFS_SEND_C_SUBVOL", Op: OpIgnore}
-	commands[C.BTRFS_SEND_C_SNAPSHOT] = CommandSpec{Name: "BTRFS_SEND_C_SNAPSHOT", Op: OpIgnore}
+	commands[C.BTRFS_SEND_C_SUBVOL] = CommandSpec{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
+	commands[C.BTRFS_SEND_C_SNAPSHOT] = CommandSpec{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
 
-	commands[C.BTRFS_SEND_C_MKFILE] = CommandSpec{Name: "BTRFS_SEND_C_MKFILE", Op: OpCreate}
-	commands[C.BTRFS_SEND_C_MKDIR] = CommandSpec{Name: "BTRFS_SEND_C_MKDIR", Op: OpCreate}
-	commands[C.BTRFS_SEND_C_MKNOD] = CommandSpec{Name: "BTRFS_SEND_C_MKNOD", Op: OpCreate}
-	commands[C.BTRFS_SEND_C_MKFIFO] = CommandSpec{Name: "BTRFS_SEND_C_MKFIFO", Op: OpCreate}
-	commands[C.BTRFS_SEND_C_MKSOCK] = CommandSpec{Name: "BTRFS_SEND_C_MKSOCK", Op: OpCreate}
-	commands[C.BTRFS_SEND_C_SYMLINK] = CommandSpec{Name: "BTRFS_SEND_C_SYMLINK", Op: OpCreate}
+	commands[C.BTRFS_SEND_C_MKFILE] = CommandSpec{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKDIR] = CommandSpec{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKNOD] = CommandSpec{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKFIFO] = CommandSpec{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKSOCK] = CommandSpec{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
+	commands[C.BTRFS_SEND_C_SYMLINK] = CommandSpec{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
 
-	commands[C.BTRFS_SEND_C_RENAME] = CommandSpec{Name: "BTRFS_SEND_C_RENAME", Op: OpRename}
-	commands[C.BTRFS_SEND_C_LINK] = CommandSpec{Name: "BTRFS_SEND_C_LINK", Op: OpCreate}
-	commands[C.BTRFS_SEND_C_UNLINK] = CommandSpec{Name: "BTRFS_SEND_C_UNLINK", Op: OpDelete}
-	commands[C.BTRFS_SEND_C_RMDIR] = CommandSpec{Name: "BTRFS_SEND_C_RMDIR", Op: OpDelete}
+	commands[C.BTRFS_SEND_C_RENAME] = CommandSpec{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
+	commands[C.BTRFS_SEND_C_LINK] = CommandSpec{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
+	commands[C.BTRFS_SEND_C_UNLINK] = CommandSpec{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
+	commands[C.BTRFS_SEND_C_RMDIR] = CommandSpec{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
 
-	commands[C.BTRFS_SEND_C_SET_XATTR] = CommandSpec{Name: "BTRFS_SEND_C_SET_XATTR", Op: OpModify}
-	commands[C.BTRFS_SEND_C_REMOVE_XATTR] = CommandSpec{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: OpModify}
+	commands[C.BTRFS_SEND_C_SET_XATTR] = CommandSpec{Name: "BTRFS_SEND_C_SET_XATTR", Op: opModify}
+	commands[C.BTRFS_SEND_C_REMOVE_XATTR] = CommandSpec{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_WRITE] = CommandSpec{Name: "BTRFS_SEND_C_WRITE", Op: OpModify}
-	commands[C.BTRFS_SEND_C_CLONE] = CommandSpec{Name: "BTRFS_SEND_C_CLONE", Op: OpModify}
+	commands[C.BTRFS_SEND_C_WRITE] = CommandSpec{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
+	commands[C.BTRFS_SEND_C_CLONE] = CommandSpec{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_TRUNCATE] = CommandSpec{Name: "BTRFS_SEND_C_TRUNCATE", Op: OpModify}
-	commands[C.BTRFS_SEND_C_CHMOD] = CommandSpec{Name: "BTRFS_SEND_C_CHMOD", Op: OpModify}
-	commands[C.BTRFS_SEND_C_CHOWN] = CommandSpec{Name: "BTRFS_SEND_C_CHOWN", Op: OpModify}
-	commands[C.BTRFS_SEND_C_UTIMES] = CommandSpec{Name: "BTRFS_SEND_C_UTIMES", Op: OpModify}
+	commands[C.BTRFS_SEND_C_TRUNCATE] = CommandSpec{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
+	commands[C.BTRFS_SEND_C_CHMOD] = CommandSpec{Name: "BTRFS_SEND_C_CHMOD", Op: opModify}
+	commands[C.BTRFS_SEND_C_CHOWN] = CommandSpec{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
+	commands[C.BTRFS_SEND_C_UTIMES] = CommandSpec{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_END] = CommandSpec{Name: "BTRFS_SEND_C_END", Op: OpEnd}
-	commands[C.BTRFS_SEND_C_UPDATE_EXTENT] = CommandSpec{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: OpModify}
+	commands[C.BTRFS_SEND_C_END] = CommandSpec{Name: "BTRFS_SEND_C_END", Op: opEnd}
+	commands[C.BTRFS_SEND_C_UPDATE_EXTENT] = CommandSpec{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
 	// Sanity check (hopefully no holes).
 	for i, command := range commands {
-		if i != C.BTRFS_SEND_C_UNSPEC && command.Op == OpUnspec {
+		if i != C.BTRFS_SEND_C_UNSPEC && command.Op == opUnspec {
 			return nil
 		}
 	}
@@ -108,7 +108,7 @@ var commands *[C.__BTRFS_SEND_C_MAX]CommandSpec = initCommands()
 type Node struct {
 	Children   map[string]*Node
 	Name       string
-	ChangeType Op
+	ChangeType operation
 	Parent     *Node
 	Original   *Node
 }
@@ -118,27 +118,27 @@ type Diff struct {
 	New      Node
 }
 
-func (diff *Diff) tagPath(path string, changeType Op) {
+func (diff *Diff) tagPath(path string, changeType operation) {
 	if debug {
 		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", changeType, path)
 	}
-	fileNode := diff.find(path, changeType == OpCreate)
-	if changeType == OpDelete {
+	fileNode := diff.find(path, changeType == opCreate)
+	if changeType == opDelete {
 		if fileNode.Original == nil {
 			fmt.Fprintf(os.Stderr, "deleting path %v which was created in same diff?\n", path)
 		}
 		delete(fileNode.Parent.Children, fileNode.Name)
 	} else { // Why this? if fileNode.Original != nil {
-		if !(fileNode.ChangeType == OpCreate && changeType == OpModify) {
+		if !(fileNode.ChangeType == opCreate && changeType == opModify) {
 			fileNode.ChangeType = changeType
 		}
 	}
-	if changeType == OpDelete {
+	if changeType == opDelete {
 		// If we deleted /this/ node, it sure as hell needs no children.
 		fileNode.Children = nil
 		if fileNode.Original != nil {
 			// Leave behind a sentinel in the Original structure.
-			fileNode.Original.ChangeType = OpDelete
+			fileNode.Original.ChangeType = opDelete
 			fileNode.Original.verifyDelete(path)
 			fileNode.Original.Children = nil
 		}
@@ -148,7 +148,7 @@ func (diff *Diff) tagPath(path string, changeType Op) {
 
 func (node *Node) verifyDelete(path string) {
 	for _, child := range node.Children {
-		if child.ChangeType != OpDelete && child.ChangeType != OpRename {
+		if child.ChangeType != opDelete && child.ChangeType != opRename {
 			fmt.Fprintf(os.Stderr, "deleting parent of node %v in %v which is not gone", node, path)
 		}
 	}
@@ -163,12 +163,12 @@ func (diff *Diff) rename(from string, to string) {
 	delete(fromNode.Parent.Children, fromNode.Name)
 	if fromNode.Original != nil {
 		// if fromNode had an original, we must mark that path destroyed.
-		fromNode.Original.ChangeType = OpRename
+		fromNode.Original.ChangeType = opRename
 	}
 	toNode := diff.find(to, true)
 	toNode.Parent.Children[toNode.Name] = fromNode
 	fromNode.Name = toNode.Name
-	fromNode.ChangeType = OpCreate
+	fromNode.ChangeType = opCreate
 	fromNode.Parent = toNode.Parent
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
@@ -251,30 +251,30 @@ func (diff *Diff) Changes() []string {
 	}
 	var ret []string
 	for name, node := range oldFiles {
-		if newFiles[name] != nil && node.ChangeType == OpUnspec {
+		if newFiles[name] != nil && node.ChangeType == opUnspec {
 			if node.Children == nil {
 				// specific case when there might be an empty change detected on the root of the subvolume
 				if name == "/" && newFiles[name].Name == "" {
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, OpUnspec, newFiles[name])
+						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, opUnspec, newFiles[name])
 					}
 				} else {
 					// TODO diff equality only
-					ret = append(ret, fmt.Sprintf("%10v: %v", OpModify, name))
+					ret = append(ret, fmt.Sprintf("%10v: %v", opModify, name))
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", OpModify, name, newFiles[name], node)
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", opModify, name, newFiles[name], node)
 					}
 				}
 			}
 			delete(newFiles, name)
 		} else {
-			if node.ChangeType != OpDelete && node.ChangeType != OpRename {
+			if node.ChangeType != opDelete && node.ChangeType != opRename {
 				fmt.Fprintf(os.Stderr, "unexpected ChangeType on original %v: %v", name, node.ChangeType)
 			}
-			if (node.ChangeType == OpDelete || node.ChangeType == OpRename) && newFiles[name] != nil && newFiles[name].ChangeType == OpCreate {
-				ret = append(ret, fmt.Sprintf("%10v: %v", OpModify, name))
+			if (node.ChangeType == opDelete || node.ChangeType == opRename) && newFiles[name] != nil && newFiles[name].ChangeType == opCreate {
+				ret = append(ret, fmt.Sprintf("%10v: %v", opModify, name))
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (OpDelete||OpRename): %10v: %v\n", OpModify, name)
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (opDelete||opRename): %10v: %v\n", opModify, name)
 				}
 				delete(newFiles, name)
 			} else {
@@ -287,9 +287,9 @@ func (diff *Diff) Changes() []string {
 		}
 	}
 	for name := range newFiles {
-		ret = append(ret, fmt.Sprintf("%10v: %v", OpCreate, name))
+		ret = append(ret, fmt.Sprintf("%10v: %v", opCreate, name))
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG] appended (new): %10v: %v\n", OpCreate, name)
+			fmt.Fprintf(os.Stderr, "[DEBUG] appended (new): %10v: %v\n", opCreate, name)
 		}
 	}
 	return ret
@@ -303,7 +303,7 @@ func changes(node *Node, prefix string, ret map[string]*Node) {
 	if (newPrefix != "") {
 		ret[newPrefix] = node
 	}
-	if node.ChangeType == OpCreate {
+	if node.ChangeType == opCreate {
 		// TODO diff equality only
 		return
 	}
@@ -404,11 +404,11 @@ func doReadStream(stream *os.File, diff *Diff) error {
 		if err != nil {
 			return err
 		}
-		if command.Type.Op == OpUnspec {
+		if command.Type.Op == opUnspec {
 			return fmt.Errorf("Unexpected command %v", command)
-		} else if command.Type.Op == OpIgnore {
+		} else if command.Type.Op == opIgnore {
 			continue
-		} else if command.Type.Op == OpRename {
+		} else if command.Type.Op == opRename {
 			fromPath, err := command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				return err
@@ -421,7 +421,7 @@ func doReadStream(stream *os.File, diff *Diff) error {
 				fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
 			}
 			diff.rename(fromPath, toPath)
-		} else if command.Type.Op == OpEnd {
+		} else if command.Type.Op == opEnd {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG] END\n")
 			}
