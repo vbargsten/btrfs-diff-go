@@ -50,7 +50,7 @@ jobs:
 
       # Create a BTRFS file
       - name: Creating an image file with a BTRFS filesystem
-        run: rm -f test.img && truncate -s 50M test.img && sudo mkfs.btrfs -f test.img
+        run: rm -f test.img && truncate -s 150M test.img && sudo mkfs.btrfs -f test.img
 
       # Mount it
       - name: Mouting the BTRFS image file
@@ -59,3 +59,13 @@ jobs:
       # Running the tests
       - name: Running the tests
         run: rm -fr .tmp && mkdir .tmp && TMPDIR=$(pwd)/.tmp TEST_DIR=$(pwd)/test.mnt sh test.sh
+
+      # Unmount
+      - name: Unmounting the BTRFS image file
+        run: ! ( LC_ALL=C mount | grep -q ' on .*test\.mnt' ) || sudo umount test.mnt
+        if: always()
+
+      # Cleanup
+      - name: Cleaning up
+        run: rm -fr .tmp test.img test.mnt
+        if: always()
