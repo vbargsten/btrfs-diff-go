@@ -113,12 +113,12 @@ type nodeInst struct {
 	Original   *nodeInst
 }
 
-type Diff struct {
+type diffInst struct {
 	Original nodeInst
 	New      nodeInst
 }
 
-func (diff *Diff) tagPath(path string, changeType operation) {
+func (diff *diffInst) tagPath(path string, changeType operation) {
 	if debug {
 		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", changeType, path)
 	}
@@ -154,7 +154,7 @@ func (node *nodeInst) verifyDelete(path string) {
 	}
 }
 
-func (diff *Diff) rename(from string, to string) {
+func (diff *diffInst) rename(from string, to string) {
 	if debug {
 		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", "rename", from)
 		fmt.Fprintf(os.Stdout, "[DEBUG] TRACE %10v %v\n", "rename_to", to)
@@ -173,7 +173,7 @@ func (diff *Diff) rename(from string, to string) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (diff *Diff) find(path string, isNew bool) *nodeInst {
+func (diff *diffInst) find(path string, isNew bool) *nodeInst {
 	if diff.New.Original == nil {
 		diff.New.Original = &diff.Original
 	}
@@ -236,11 +236,11 @@ func (node *nodeInst) String() string {
 	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.ChangeType, node.Name)
 }
 
-func (diff *Diff) String() string {
+func (diff *diffInst) String() string {
 	return "\n\t" + strings.Join((diff.Changes())[:], "\n\t") + "\n"
 }
 
-func (diff *Diff) Changes() []string {
+func (diff *diffInst) Changes() []string {
 	newFiles := make(map[string]*nodeInst)
 	oldFiles := make(map[string]*nodeInst)
 	changes(&diff.New, "", newFiles)
@@ -377,11 +377,11 @@ func (command *commandInst) ReadParam(expectedType int) (string, error) {
 	return ret, nil
 }
 
-func readStream(stream *os.File, diff *Diff, channel chan error) {
+func readStream(stream *os.File, diff *diffInst, channel chan error) {
 	channel <- doReadStream(stream, diff)
 }
 
-func doReadStream(stream *os.File, diff *Diff) error {
+func doReadStream(stream *os.File, diff *diffInst) error {
 	defer stream.Close()
 	input := bufio.NewReader(stream)
 	btrfsStreamHeader, err := input.ReadString('\x00')
@@ -502,13 +502,13 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	return nil
 }
 
-func btrfsSendDiffs(source, subvolume string) (*Diff, error) {
+func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 	read, write, err := os.Pipe()
 	if err != nil {
 		return nil, fmt.Errorf("pipe returned %v\n", err)
 	}
 
-	var diff Diff = Diff{}
+	var diff diffInst = diffInst{}
 	channel := make(chan error)
 	go readStream(read, &diff, channel)
 	err = btrfsSendSyscall(write, source, subvolume)
@@ -522,7 +522,7 @@ func btrfsSendDiffs(source, subvolume string) (*Diff, error) {
 	return &diff, nil
 }
 
-func btrfsStreamFileDiffs(streamfile string) (*Diff, error) {
+func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	if debug {
 		fmt.Fprintf(os.Stdout, "[DEBUG] opening file '%v'\n", streamfile)
 	}
@@ -532,7 +532,7 @@ func btrfsStreamFileDiffs(streamfile string) (*Diff, error) {
 	}
 	defer f.Close()
 
-	var diff Diff = Diff{}
+	var diff diffInst = diffInst{}
 	channel := make(chan error)
 	go readStream(f, &diff, channel)
 	if err != nil {
@@ -560,7 +560,7 @@ func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) 
 	if ! c_stat.IsDir() {
 		return nil, fmt.Errorf("Error: '%s' is not a directory\n", child)
 	}
-	diff, err := btrfsSendDiffs(parent, child)
+	diff, err := btrfsSendDiff(parent, child)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +575,7 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 	if ! f_stat.Mode().IsRegular() {
 		return nil, fmt.Errorf("Error: '%s' is not a file\n", streamfile)
 	}
-	diff, err := btrfsStreamFileDiffs(streamfile)
+	diff, err := btrfsStreamFileDiff(streamfile)
 	if err != nil {
 		return nil, err
 	}
