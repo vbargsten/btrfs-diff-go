@@ -52,48 +52,48 @@ func (op operation) String() string {
 	return names[op]
 }
 
-type CommandSpec struct {
+type commandSpec struct {
 	Name string
 	Op   operation
 }
 
 type Command struct {
-	Type *CommandSpec
+	Type *commandSpec
 	body []byte
 }
 
-func initCommands() *[C.__BTRFS_SEND_C_MAX]CommandSpec {
-	var commands [C.__BTRFS_SEND_C_MAX]CommandSpec
-	commands[C.BTRFS_SEND_C_UNSPEC] = CommandSpec{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
+func initCommands() *[C.__BTRFS_SEND_C_MAX]commandSpec {
+	var commands [C.__BTRFS_SEND_C_MAX]commandSpec
+	commands[C.BTRFS_SEND_C_UNSPEC] = commandSpec{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
 
-	commands[C.BTRFS_SEND_C_SUBVOL] = CommandSpec{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
-	commands[C.BTRFS_SEND_C_SNAPSHOT] = CommandSpec{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
+	commands[C.BTRFS_SEND_C_SUBVOL] = commandSpec{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
+	commands[C.BTRFS_SEND_C_SNAPSHOT] = commandSpec{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
 
-	commands[C.BTRFS_SEND_C_MKFILE] = CommandSpec{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKDIR] = CommandSpec{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKNOD] = CommandSpec{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKFIFO] = CommandSpec{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKSOCK] = CommandSpec{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
-	commands[C.BTRFS_SEND_C_SYMLINK] = CommandSpec{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKFILE] = commandSpec{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKDIR] = commandSpec{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKNOD] = commandSpec{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKFIFO] = commandSpec{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
+	commands[C.BTRFS_SEND_C_MKSOCK] = commandSpec{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
+	commands[C.BTRFS_SEND_C_SYMLINK] = commandSpec{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
 
-	commands[C.BTRFS_SEND_C_RENAME] = CommandSpec{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
-	commands[C.BTRFS_SEND_C_LINK] = CommandSpec{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
-	commands[C.BTRFS_SEND_C_UNLINK] = CommandSpec{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
-	commands[C.BTRFS_SEND_C_RMDIR] = CommandSpec{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
+	commands[C.BTRFS_SEND_C_RENAME] = commandSpec{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
+	commands[C.BTRFS_SEND_C_LINK] = commandSpec{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
+	commands[C.BTRFS_SEND_C_UNLINK] = commandSpec{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
+	commands[C.BTRFS_SEND_C_RMDIR] = commandSpec{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
 
-	commands[C.BTRFS_SEND_C_SET_XATTR] = CommandSpec{Name: "BTRFS_SEND_C_SET_XATTR", Op: opModify}
-	commands[C.BTRFS_SEND_C_REMOVE_XATTR] = CommandSpec{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opModify}
+	commands[C.BTRFS_SEND_C_SET_XATTR] = commandSpec{Name: "BTRFS_SEND_C_SET_XATTR", Op: opModify}
+	commands[C.BTRFS_SEND_C_REMOVE_XATTR] = commandSpec{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_WRITE] = CommandSpec{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
-	commands[C.BTRFS_SEND_C_CLONE] = CommandSpec{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
+	commands[C.BTRFS_SEND_C_WRITE] = commandSpec{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
+	commands[C.BTRFS_SEND_C_CLONE] = commandSpec{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_TRUNCATE] = CommandSpec{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
-	commands[C.BTRFS_SEND_C_CHMOD] = CommandSpec{Name: "BTRFS_SEND_C_CHMOD", Op: opModify}
-	commands[C.BTRFS_SEND_C_CHOWN] = CommandSpec{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
-	commands[C.BTRFS_SEND_C_UTIMES] = CommandSpec{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
+	commands[C.BTRFS_SEND_C_TRUNCATE] = commandSpec{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
+	commands[C.BTRFS_SEND_C_CHMOD] = commandSpec{Name: "BTRFS_SEND_C_CHMOD", Op: opModify}
+	commands[C.BTRFS_SEND_C_CHOWN] = commandSpec{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
+	commands[C.BTRFS_SEND_C_UTIMES] = commandSpec{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_END] = CommandSpec{Name: "BTRFS_SEND_C_END", Op: opEnd}
-	commands[C.BTRFS_SEND_C_UPDATE_EXTENT] = CommandSpec{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
+	commands[C.BTRFS_SEND_C_END] = commandSpec{Name: "BTRFS_SEND_C_END", Op: opEnd}
+	commands[C.BTRFS_SEND_C_UPDATE_EXTENT] = commandSpec{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
 	// Sanity check (hopefully no holes).
 	for i, command := range commands {
 		if i != C.BTRFS_SEND_C_UNSPEC && command.Op == opUnspec {
@@ -103,7 +103,7 @@ func initCommands() *[C.__BTRFS_SEND_C_MAX]CommandSpec {
 	return &commands
 }
 
-var commands *[C.__BTRFS_SEND_C_MAX]CommandSpec = initCommands()
+var commands *[C.__BTRFS_SEND_C_MAX]commandSpec = initCommands()
 
 type Node struct {
 	Children   map[string]*Node
