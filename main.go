@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	btrfsdiff "github.com/mbideau/btrfs-diff-go/pkg"
@@ -118,6 +119,9 @@ func main() {
 
 		// if there are changes/differences
 		if len(changes) > 0 {
+
+			// sort the list alphabetically (default)
+			sort.Strings(changes)
 
 			// print changes
 			fmt.Printf("%v\n", strings.Join(changes, "\n"))

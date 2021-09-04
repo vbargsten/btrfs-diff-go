@@ -118,10 +118,10 @@ echo "-- Now testing against a tricky stream file ..."
 #       'multi-clone-src-v4.8.2.stream.xz' has been extracted and 'multi-clone-src-v4.8.2.stream' renamed to 'test.data'
 failed=true
 if ! "$BTRFS_DIFF_BIN" --file "$THIS_DIR"/test.data >"$TMPDIR"/diff.out; then
-    cat > "$TMPDIR"/diff.src <<ENDCAT
-   deleted: /file2_1
+    cat >"$TMPDIR"/diff.src <<ENDCAT
      added: /file1_1
      added: /file1_2
+   deleted: /file2_1
 ENDCAT
     if diff "$TMPDIR"/diff.out "$TMPDIR"/diff.src; then
         failed=false
