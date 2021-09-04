@@ -488,14 +488,14 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] sourceUID %v\n", sourceUID)
 	}
-	var subvol_fd C.uint = C.uint(subvolDir.Fd())
+	var subvolFd C.uint = C.uint(subvolDir.Fd())
 	var opts C.struct_btrfs_ioctl_send_args
 	opts.send_fd = C.__s64(stream.Fd())
 	opts.clone_sources = &sourceUID
 	opts.clone_sources_count = 1
 	opts.parent_root = sourceUID
 	opts.flags = C.BTRFS_SEND_FLAG_NO_FILE_DATA
-	ret, _, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvol_fd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
+	ret, _, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(subvolFd), C.BTRFS_IOC_SEND, uintptr(unsafe.Pointer(&opts)))
 	if ret != 0 {
 		return err
 	}
