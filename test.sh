@@ -31,8 +31,17 @@ if [ "$(id -u)" != '0' ]; then
     use_sudo=sudo
 fi
 
+echo "Tmp directory: '$TMPDIR'"
+[ ! -d "$TMPDIR" ] && mkdir -p "$TMPDIR"
+$use_sudo chown "$USER" "$TMPDIR"
+$use_sudo chmod u=rwx "$TMPDIR"
+
 echo "Test directory: '$TEST_DIR'"
-[ ! -d "$TEST_DIR" ] && mkdir -p "$TEST_DIR"
+remove_test_dir=false
+if [ ! -d "$TEST_DIR" ]; then
+    mkdir -p "$TEST_DIR"
+    remove_test_dir=true
+fi
 $use_sudo chown "$USER" "$TEST_DIR"
 $use_sudo chmod u=rwx "$TEST_DIR"
 
@@ -143,3 +152,6 @@ if [ -d "$SNAPS_DIR" ]; then
     done
 fi
 rm -f "$TMPDIR"/a_raw "$TMPDIR"/a "$TMPDIR"/b "$TMPDIR"/b_diff "$TMPDIR"/diff "$TMPDIR"/diff.out "$TMPDIR"/diff.src
+if [ -d "$TEST_DIR" ] && [ "$remove_test_dir" = 'true' ]; then
+    rm -fr "$TEST_DIR"
+fi
