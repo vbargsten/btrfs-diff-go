@@ -5,7 +5,7 @@
 // it requires: golang and libbtrfs-dev, so on GNU Linux/Debian do :
 //   sudo apt install golang libbtrfs-dev
 
-package btrfs_diff
+package btrfsdiff
 
 // We get the constants from this header.
 

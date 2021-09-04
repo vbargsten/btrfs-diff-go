@@ -86,7 +86,7 @@ func main() {
 		second = os.Args[2]
 		if len(os.Args) == 4 && first == "--debug" {
 			fmt.Println("[DEBUG] Debug enabled")
-			btrfs_diff.SetDebug(true)
+			btrfsdiff.SetDebug(true)
 			first = os.Args[2]
 			second = os.Args[3]
 		}
@@ -98,7 +98,7 @@ func main() {
 		if first == "-f" || first == "--file" {
 			var streamfile string
 			streamfile, _ = filepath.Abs(second)
-			changes, err = btrfs_diff.GetChangesFromStreamFile(streamfile)
+			changes, err = btrfsdiff.GetChangesFromStreamFile(streamfile)
 
 			// parent and child arguments
 		} else {
@@ -107,7 +107,7 @@ func main() {
 			var child string
 			parent, _ = filepath.Abs(first)
 			child, _ = filepath.Abs(second)
-			changes, err = btrfs_diff.GetChangesFromTwoSubvolumes(child, parent)
+			changes, err = btrfsdiff.GetChangesFromTwoSubvolumes(child, parent)
 		}
 
 		if err != nil {
