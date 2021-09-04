@@ -25,14 +25,16 @@ if [ ! -x "$BTRFS_DIFF_BIN" ]; then
     exit 1
 fi
 
-echo "Test directory: '$TEST_DIR'"
-
-[ ! -d "$TEST_DIR" ] && mkdir -p "$TEST_DIR"
-
 use_sudo=
 if [ "$(id -u)" != '0' ]; then
+    echo "Using sudo"
     use_sudo=sudo
 fi
+
+echo "Test directory: '$TEST_DIR'"
+[ ! -d "$TEST_DIR" ] && mkdir -p "$TEST_DIR"
+$use_sudo chown "$USER" "$TEST_DIR"
+$use_sudo chmod u=rwx "$TEST_DIR"
 
 echo "-- Removing existing data and snapshots"
 [ -d "$DATA_DIR" ] && $use_sudo btrfs subvolume delete "$DATA_DIR" > /dev/null
