@@ -450,7 +450,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	return nil
 }
 
-func getSubvolUid(path string) (C.__u64, error) {
+func getSubVolUID(path string) (C.__u64, error) {
 	var sus C.struct_subvol_uuid_search
 	var subvol_info *C.struct_subvol_info
 	if debug {
@@ -480,9 +480,9 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	if err != nil {
 		return fmt.Errorf("open returned %v\n", err)
 	}
-	root_id, err := getSubvolUid(source)
+	root_id, err := getSubVolUID(source)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "getSubvolUid returns %v\n", err)
+		fmt.Fprintf(os.Stderr, "getSubVolUID returns %v\n", err)
 		os.Exit(1)
 	}
 	if debug {
