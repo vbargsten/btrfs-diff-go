@@ -545,6 +545,7 @@ func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	return &diff, nil
 }
 
+// GetChangesFromTwoSubvolumes return a list of changes (a diff) between two BTRFS subvolumes
 func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) {
 	parentStat, err := os.Stat(parent)
 	if err != nil {
@@ -567,6 +568,7 @@ func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) 
 	return diff.Changes(), nil
 }
 
+// GetChangesFromStreamFile return a list of changes (a diff) from a BTRFS send stream file
 func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 	fileStat, err := os.Lstat(streamfile)
 	if err != nil {
@@ -582,6 +584,7 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 	return diff.Changes(), nil
 }
 
+// SetDebug set the debug mode flag
 func SetDebug(status bool) {
 	debug = status
 }
