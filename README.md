@@ -8,6 +8,7 @@ script (binary) of 95 loc.
 
 ![Release](https://img.shields.io/github/v/release/mbideau/btrfs-diff-go)
 ![Release Date](https://img.shields.io/github/release-date/mbideau/btrfs-diff-go)  
+[![Go Report Card](https://goreportcard.com/badge/github.com/mbideau/btrfs-diff-go)](https://goreportcard.com/report/github.com/mbideau/btrfs-diff-go)
 [![Go build (v1.14, v1.15, v1.16, v1.17)](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_build.yml/badge.svg)
 ](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_build.yml)
 [![Go static analysis](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_static_analysis.yml/badge.svg)
