@@ -62,7 +62,7 @@ jobs:
 
       # Running the tests
       - name: Running the tests
-        run: rm -fr .tmp && mkdir .tmp && TMPDIR="$(pwd)"/.tmp TEST_DIR="$(pwd)"/test.mnt BTRFS_DIFF_BIN="$(pwd)"/btrfs-diff-go sh test.sh
+        run: rm -fr .tmp && mkdir .tmp && TMPDIR="$(pwd)"/.tmp TEST_DIR="$(pwd)"/test.mnt BTRFS_DIFF_BIN="$(command -v btrfs-diff-go)" sh test.sh
 
       # Unmount
       - name: Unmounting the BTRFS image file
@@ -72,4 +72,19 @@ jobs:
       # Cleanup
       - name: Cleaning up
         run: rm -fr .tmp test.img test.mnt
+        if: always()
+
+      # List files
+      - name: Listing files
+        run: ls -alh --color "$(pwd)"
+        if: always()
+
+      # Display the PATH
+      - name: Display the PATH
+        run: echo "PATH: $PATH"
+        if: always()
+
+      # Display the mounted fs
+      - name: Display the mounted fs
+        run: mount
         if: always()
