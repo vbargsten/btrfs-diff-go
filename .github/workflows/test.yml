@@ -54,7 +54,7 @@ jobs:
 
       # Mount it
       - name: Mouting the BTRFS image file
-        run: sudo rmdir test.mnt && sudo mkdir test.mnt && sudo mount -t btrfs -o loop test.img test.mnt
+        run: sudo rmdir test.mnt && sudo mkdir test.mnt && sudo mount -v -t btrfs -o loop test.img test.mnt
 
       # Running the tests
       - name: Running the tests
@@ -62,7 +62,7 @@ jobs:
 
       # Unmount
       - name: Unmounting the BTRFS image file
-        run: ! ( LC_ALL=C mount | grep -q ' on .*test\.mnt' ) || sudo umount test.mnt
+        run: if LC_ALL=C mount | grep -q ' on .*test\.mnt'; then sudo umount -v test.mnt; fi
         if: always()
 
       # Cleanup
