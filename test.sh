@@ -4,7 +4,9 @@ set -e
 
 THIS_DIR="$(realpath "$(dirname "$0")")"
 
-BTRFS_DIFF_BIN="$THIS_DIR"/btrfs-diff
+if [ "$BTRFS_DIFF_BIN" = '' ]; then
+    BTRFS_DIFF_BIN="$THIS_DIR"/btrfs-diff
+fi
 if [ "$TMPDIR" = '' ]; then
     TMPDIR="$THIS_DIR"/.tmp
 fi
@@ -15,7 +17,7 @@ DATA_DIR="$TEST_DIR"/data
 SNAPS_DIR="$TEST_DIR"/snaps
 
 if [ ! -x "$BTRFS_DIFF_BIN" ]; then
-    echo "Binary '' not found or not executable" >&2
+    echo "Binary '$BTRFS_DIFF_BIN' not found or not executable" >&2
     exit 1
 fi
 
