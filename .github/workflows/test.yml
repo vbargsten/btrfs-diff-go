@@ -1,14 +1,15 @@
+---
 # This is a basic workflow to help you get started with Actions
 
 name: Test
 
-# Controls when the action will run. 
-on:
+# Controls when the action will run.
+on:  # yamllint disable-line rule:truthy
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,11 +22,10 @@ jobs:
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    #runs-on: ubuntu-16.04
 
     strategy:
       matrix:
-        go: [ '1.14', '1.15', '1.16', '1.17' ]
+        go: ['1.14', '1.15', '1.16', '1.17']
 
     name: Go ${{ matrix.go }} build
 
@@ -58,11 +58,16 @@ jobs:
 
       # Mount it
       - name: Mouting the BTRFS image file
-        run: sudo rm -fr test.mnt && sudo mkdir test.mnt && sudo mount -v -t btrfs -o loop test.img test.mnt
+        run: |
+          sudo rm -fr test.mnt && sudo mkdir test.mnt && \
+          sudo mount -v -t btrfs -o loop test.img test.mnt
 
       # Running the tests
       - name: Running the tests
-        run: rm -fr .tmp && mkdir .tmp && TMPDIR="$(pwd)"/.tmp TEST_DIR="$(pwd)"/test.mnt BTRFS_DIFF_BIN="$(command -v btrfs-diff-go)" sh test.sh
+        run: |
+          rm -fr .tmp && mkdir .tmp && \
+          TMPDIR="$(pwd)"/.tmp TEST_DIR="$(pwd)"/test.mnt \
+            BTRFS_DIFF_BIN="$(command -v btrfs-diff-go)" sh test.sh
 
       # Unmount
       - name: Unmounting the BTRFS image file
@@ -81,7 +86,7 @@ jobs:
 
       # Display the PATH
       - name: Display the PATH
-        run: echo "PATH: $PATH"
+        run: 'echo "PATH: $PATH"'
         if: always()
 
       # Display the mounted fs
