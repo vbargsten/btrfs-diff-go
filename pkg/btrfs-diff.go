@@ -52,58 +52,58 @@ func (op operation) String() string {
 	return names[op]
 }
 
-type commandSpec struct {
+type commandType struct {
 	Name string
 	Op   operation
 }
 
-type Command struct {
-	Type *commandSpec
+type commandInst struct {
+	Type *commandType
 	body []byte
 }
 
-func initCommands() *[C.__BTRFS_SEND_C_MAX]commandSpec {
-	var commands [C.__BTRFS_SEND_C_MAX]commandSpec
-	commands[C.BTRFS_SEND_C_UNSPEC] = commandSpec{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
+func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
+	var commandsDefs [C.__BTRFS_SEND_C_MAX]commandType
+	commandsDefs[C.BTRFS_SEND_C_UNSPEC] = commandType{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
 
-	commands[C.BTRFS_SEND_C_SUBVOL] = commandSpec{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
-	commands[C.BTRFS_SEND_C_SNAPSHOT] = commandSpec{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_SUBVOL] = commandType{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_SNAPSHOT] = commandType{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
 
-	commands[C.BTRFS_SEND_C_MKFILE] = commandSpec{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKDIR] = commandSpec{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKNOD] = commandSpec{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKFIFO] = commandSpec{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
-	commands[C.BTRFS_SEND_C_MKSOCK] = commandSpec{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
-	commands[C.BTRFS_SEND_C_SYMLINK] = commandSpec{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKFILE] = commandType{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKDIR] = commandType{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKNOD] = commandType{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKFIFO] = commandType{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKSOCK] = commandType{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_SYMLINK] = commandType{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
 
-	commands[C.BTRFS_SEND_C_RENAME] = commandSpec{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
-	commands[C.BTRFS_SEND_C_LINK] = commandSpec{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
-	commands[C.BTRFS_SEND_C_UNLINK] = commandSpec{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
-	commands[C.BTRFS_SEND_C_RMDIR] = commandSpec{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
+	commandsDefs[C.BTRFS_SEND_C_RENAME] = commandType{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
+	commandsDefs[C.BTRFS_SEND_C_LINK] = commandType{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_UNLINK] = commandType{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
+	commandsDefs[C.BTRFS_SEND_C_RMDIR] = commandType{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
 
-	commands[C.BTRFS_SEND_C_SET_XATTR] = commandSpec{Name: "BTRFS_SEND_C_SET_XATTR", Op: opModify}
-	commands[C.BTRFS_SEND_C_REMOVE_XATTR] = commandSpec{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandType{Name: "BTRFS_SEND_C_SET_XATTR", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandType{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_WRITE] = commandSpec{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
-	commands[C.BTRFS_SEND_C_CLONE] = commandSpec{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_WRITE] = commandType{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_CLONE] = commandType{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_TRUNCATE] = commandSpec{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
-	commands[C.BTRFS_SEND_C_CHMOD] = commandSpec{Name: "BTRFS_SEND_C_CHMOD", Op: opModify}
-	commands[C.BTRFS_SEND_C_CHOWN] = commandSpec{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
-	commands[C.BTRFS_SEND_C_UTIMES] = commandSpec{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_TRUNCATE] = commandType{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandType{Name: "BTRFS_SEND_C_CHMOD", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
 
-	commands[C.BTRFS_SEND_C_END] = commandSpec{Name: "BTRFS_SEND_C_END", Op: opEnd}
-	commands[C.BTRFS_SEND_C_UPDATE_EXTENT] = commandSpec{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_END] = commandType{Name: "BTRFS_SEND_C_END", Op: opEnd}
+	commandsDefs[C.BTRFS_SEND_C_UPDATE_EXTENT] = commandType{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
 	// Sanity check (hopefully no holes).
-	for i, command := range commands {
+	for i, command := range commandsDefs {
 		if i != C.BTRFS_SEND_C_UNSPEC && command.Op == opUnspec {
 			return nil
 		}
 	}
-	return &commands
+	return &commandsDefs
 }
 
-var commands *[C.__BTRFS_SEND_C_MAX]commandSpec = initCommands()
+var commandsDefs *[C.__BTRFS_SEND_C_MAX]commandType = initCommandsDefinitions()
 
 type Node struct {
 	Children   map[string]*Node
@@ -330,7 +330,7 @@ func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
 	return data, nil
 }
 
-func readCommand(input *bufio.Reader) (*Command, error) {
+func readCommand(input *bufio.Reader) (*commandInst, error) {
 	cmdSizeB, err := peekAndDiscard(input, 4)
 	if err != nil {
 		return nil, fmt.Errorf("Short read on command size: %v", err)
@@ -352,15 +352,15 @@ func readCommand(input *bufio.Reader) (*Command, error) {
 		return nil, fmt.Errorf("Stream contains invalid command type %v", cmdType)
 	}
 	if debug {
-		fmt.Fprintf(os.Stdout, "[DEBUG] Cmd %v; type %v\n", cmdData, commands[cmdType].Name)
+		fmt.Fprintf(os.Stdout, "[DEBUG] Cmd %v; type %v\n", cmdData, commandsDefs[cmdType].Name)
 	}
-	return &Command{
-		Type: &commands[cmdType],
+	return &commandInst{
+		Type: &commandsDefs[cmdType],
 		body: cmdData,
 	}, nil
 }
 
-func (command *Command) ReadParam(expectedType int) (string, error) {
+func (command *commandInst) ReadParam(expectedType int) (string, error) {
 	if len(command.body) < 4 {
 		return "", fmt.Errorf("No more parameters")
 	}
