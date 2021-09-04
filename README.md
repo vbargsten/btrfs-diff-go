@@ -8,12 +8,17 @@ script (binary) of 95 loc.
 
 ![Release](https://img.shields.io/github/v/release/mbideau/btrfs-diff-go)
 ![Release Date](https://img.shields.io/github/release-date/mbideau/btrfs-diff-go)  
-[![Go build (v1.14, v1.15, v1.16, v1.17)](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_build.yml/badge.svg)](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_build.yml)
+[![Go build (v1.14, v1.15, v1.16, v1.17)](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_build.yml/badge.svg)
+](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_build.yml)
 [![Go static analysis](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_static_analysis.yml/badge.svg)
-](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_static_analysis.yml)  
+](https://github.com/mbideau/btrfs-diff-go/actions/workflows/go_static_analysis.yml)
+[![Test](https://github.com/mbideau/btrfs-diff-go/actions/workflows/test.yml/badge.svg)
+](https://github.com/mbideau/btrfs-diff-go/actions/workflows/test.yml)  
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](CODE_OF_CONDUCT.md)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)
+](CODE_OF_CONDUCT.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)
+](https://conventionalcommits.org)
 
 ## USAGE
 
