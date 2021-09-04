@@ -16,8 +16,12 @@ fi
 DATA_DIR="$TEST_DIR"/data
 SNAPS_DIR="$TEST_DIR"/snaps
 
+if [ ! -e "$BTRFS_DIFF_BIN" ]; then
+    echo "Binary '$BTRFS_DIFF_BIN' not found" >&2
+    exit 1
+fi
 if [ ! -x "$BTRFS_DIFF_BIN" ]; then
-    echo "Binary '$BTRFS_DIFF_BIN' not found or not executable" >&2
+    echo "Binary '$BTRFS_DIFF_BIN' not executable" >&2
     exit 1
 fi
 
