@@ -348,7 +348,7 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 		return nil, fmt.Errorf("short read on command body: %v", err)
 	}
 	cmdType := binary.LittleEndian.Uint16(cmdTypeB)
-	if cmdType < 0 || cmdType > C.BTRFS_SEND_C_MAX {
+	if cmdType > C.BTRFS_SEND_C_MAX {
 		return nil, fmt.Errorf("stream contains invalid command type %v", cmdType)
 	}
 	if debug {
