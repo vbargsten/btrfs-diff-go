@@ -546,18 +546,18 @@ func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 }
 
 func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) {
-	p_stat, err := os.Stat(parent)
+	parentStat, err := os.Stat(parent)
 	if err != nil {
 		return nil, err
 	}
-	if ! p_stat.IsDir() {
+	if ! parentStat.IsDir() {
 		return nil, fmt.Errorf("Error: '%s' is not a directory", parent)
 	}
-	c_stat, err := os.Stat(child)
+	childStat, err := os.Stat(child)
 	if err != nil {
 		return nil, err
 	}
-	if ! c_stat.IsDir() {
+	if ! childStat.IsDir() {
 		return nil, fmt.Errorf("Error: '%s' is not a directory", child)
 	}
 	diff, err := btrfsSendDiff(parent, child)
@@ -568,11 +568,11 @@ func GetChangesFromTwoSubvolumes(child string, parent string) ([]string, error) 
 }
 
 func GetChangesFromStreamFile(streamfile string) ([]string, error) {
-	f_stat, err := os.Lstat(streamfile)
+	fileStat, err := os.Lstat(streamfile)
 	if err != nil {
 		return nil, err
 	}
-	if ! f_stat.Mode().IsRegular() {
+	if ! fileStat.Mode().IsRegular() {
 		return nil, fmt.Errorf("Error: '%s' is not a file", streamfile)
 	}
 	diff, err := btrfsStreamFileDiff(streamfile)
