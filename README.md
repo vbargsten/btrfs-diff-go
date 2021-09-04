@@ -247,9 +247,7 @@ It is very raw but it test already a lot of cases.
 
 By order of priority :
 
-* [ ] customize the Github *test* action to have a btrfs filesystem (in a file and mounted to a
-  writable path)
-* [ ] add a *test: pass* badge when the test will be able to pass
+* [ ] create a screencast to show of the program
 * [ ] make the program translatable
 * [ ] create a Github action to automaticaly insert the help into the README from the exectuion of
   the command
