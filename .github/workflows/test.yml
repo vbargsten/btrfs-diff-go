@@ -65,7 +65,6 @@ jobs:
       # Running the tests
       - name: Running the tests
         run: |
-          rm -fr .tmp && mkdir .tmp && \
           TMPDIR="$(pwd)"/.tmp TEST_DIR="$(pwd)"/test.mnt \
             BTRFS_DIFF_BIN="$(command -v btrfs-diff-go)" sh test.sh
 
@@ -76,5 +75,5 @@ jobs:
 
       # Cleanup
       - name: Cleaning up
-        run: rm -fr .tmp test.img test.mnt
+        run: rm -fr test.img test.mnt
         if: always()
