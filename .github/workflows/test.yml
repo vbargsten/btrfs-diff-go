@@ -62,7 +62,7 @@ jobs:
 
       # Running the tests
       - name: Running the tests
-        run: rm -fr .tmp && mkdir .tmp && TMPDIR=$(pwd)/.tmp TEST_DIR=$(pwd)/test.mnt sh test.sh
+        run: rm -fr .tmp && mkdir .tmp && TMPDIR="$(pwd)"/.tmp TEST_DIR="$(pwd)"/test.mnt BTRFS_DIFF_BIN="$(pwd)"/btrfs-diff-go sh test.sh
 
       # Unmount
       - name: Unmounting the BTRFS image file
