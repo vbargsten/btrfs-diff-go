@@ -476,7 +476,7 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] opening subvolume '%s'\n", subvolume)
 	}
-	subvol_f, err := os.OpenFile(subvolume, os.O_RDONLY, 0777)
+	subvolDir, err := os.OpenFile(subvolume, os.O_RDONLY, 0777)
 	if err != nil {
 		return fmt.Errorf("open returned %v", err)
 	}
@@ -488,7 +488,7 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] root_id %v\n", root_id)
 	}
-	var subvol_fd C.uint = C.uint(subvol_f.Fd())
+	var subvol_fd C.uint = C.uint(subvolDir.Fd())
 	var opts C.struct_btrfs_ioctl_send_args
 	opts.send_fd = C.__s64(stream.Fd())
 	opts.clone_sources = &root_id
