@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/mbideau/btrfs-diff-go/pkg"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	btrfsdiff "github.com/mbideau/btrfs-diff-go/pkg"
 )
 
 func usage(progname string) {
