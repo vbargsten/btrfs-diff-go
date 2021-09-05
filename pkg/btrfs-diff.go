@@ -825,10 +825,14 @@ func SetDebug(status bool) {
 	}
 }
 
-// SetUtimeOpModify consider the Utime instruction as a modification
-func SetUtimeOpModify() {
-	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG] Utimes will not be ignored\n")
+// ConsiderUtimeOp consider the Utime instruction (eventually turned into a 'changed' operation)
+func ConsiderUtimeOp(asOpModify bool) {
+	var opRef operation = opTimes
+	if asOpModify {
+		opRef = opModify
 	}
-	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opTimes}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] Utimes will be considered as '%v'\n", opRef)
+	}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opRef}
 }
