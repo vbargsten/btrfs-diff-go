@@ -44,12 +44,13 @@ const (
 	opTimes
 	opPermissions
 	opOwnership
+	opAttributes
 	opDelete
 	opRename // Special cased -- we need two paths
 	opEnd
 )
 
-var names []string = []string{"!!!", "ignored", "added", "changed", "times", "perms", "own", "deleted", "renamed", "END"}
+var names []string = []string{"!!!", "ignored", "added", "changed", "times", "perms", "own", "attr", "deleted", "renamed", "END"}
 
 func (op operation) String() string {
 	return names[op]
@@ -84,8 +85,8 @@ func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
 	commandsDefs[C.BTRFS_SEND_C_UNLINK] = commandType{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
 	commandsDefs[C.BTRFS_SEND_C_RMDIR] = commandType{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
 
-	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandType{Name: "BTRFS_SEND_C_SET_XATTR", Op: opModify}
-	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandType{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandType{Name: "BTRFS_SEND_C_SET_XATTR", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandType{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opIgnore}
 
 	commandsDefs[C.BTRFS_SEND_C_WRITE] = commandType{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
 	commandsDefs[C.BTRFS_SEND_C_CLONE] = commandType{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
@@ -168,8 +169,8 @@ func (diff *diffInst) tagPath(path string, changeType operation) {
 	// not a deletion
 	} else {
 
-		// not a creation nor the current operation a change
-		if (fileNode.ChangeType != opCreate || (changeType != opModify && changeType != opTimes && changeType != opPermissions && changeType != opOwnership)) {
+		// not a creation nor the current operation is a modification
+		if (fileNode.ChangeType != opCreate || (changeType != opModify && changeType != opTimes && changeType != opPermissions && changeType != opOwnership && changeType != opAttributes)) {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]            current operation is not a modification, or the current node ChangeType is not '%v' (%v)\n", opCreate, fileNode.ChangeType)
 				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", changeType)
@@ -398,16 +399,17 @@ func (diff *diffInst) Changes() []string {
 	for name, node := range oldFiles {
 		if newFiles[name] != nil && node.ChangeType == opUnspec {
 			if node.Children == nil {
+				newNodeChangeType := newFiles[name].ChangeType
 				// specific case when there might be an empty change detected on the root of the subvolume
 				if name == "/" && newFiles[name].Name == "" {
 					if debug {
 						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, opUnspec, newFiles[name])
 					}
 				// time modification or permissions
-				} else if (newFiles[name].ChangeType == opTimes || newFiles[name].ChangeType == opPermissions || newFiles[name].ChangeType == opOwnership) {
-					ret = append(ret, fmt.Sprintf("%10v: %v", newFiles[name].ChangeType, name))
+				} else if (newNodeChangeType == opTimes || newNodeChangeType == opPermissions || newNodeChangeType == opOwnership || newNodeChangeType == opAttributes) {
+					ret = append(ret, fmt.Sprintf("%10v: %v", newNodeChangeType, name))
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newFiles[name].ChangeType, name, newFiles[name], node)
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newNodeChangeType, name, newFiles[name], node)
 					}
 				} else {
 					// TODO diff equality only
@@ -860,4 +862,17 @@ func ConsiderChownOp(asOpModify bool) {
 		fmt.Fprintf(os.Stderr, "[DEBUG] Chown will be considered as '%v'\n", opRef)
 	}
 	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opRef}
+}
+
+// ConsiderXattrOp consider the Xattr instruction (eventually turned into a 'changed' operation)
+func ConsiderXattrOp(asOpModify bool) {
+	var opRef operation = opAttributes
+	if asOpModify {
+		opRef = opModify
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] Xattr will be considered as '%v'\n", opRef)
+	}
+	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandType{Name: "BTRFS_SEND_C_SET_XATTR", Op: opRef}
+	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandType{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opRef}
 }

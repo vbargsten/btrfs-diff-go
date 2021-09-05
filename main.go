@@ -65,6 +65,12 @@ OPTIONS
 		but if you also specify '=changed' they will be labelled
 		'changed'.
 
+	--with-attr[=changed]
+		By defautl attribute modifications are ignored. With that option
+		they will be taken into account. They are labelled as 'attr'
+		but if you also specify '=changed' they will be labelled
+		'changed'.
+
 EXAMPLES
 
 	Get the differences between two snapshots.
@@ -107,6 +113,8 @@ func main() {
 	var optionPermsAsChanged bool = false
 	var optionWithOwn bool = false
 	var optionOwnAsChanged bool = false
+	var optionWithAttr bool = false
+	var optionAttrAsChanged bool = false
 	var argSubvolParent string = ""
 	var argSubvolChild string = ""
 
@@ -136,6 +144,10 @@ func main() {
 				optionWithOwn = true
 			case "--with-own=changed":
 				optionOwnAsChanged = true
+			case "--with-attr":
+				optionWithAttr = true
+			case "--with-attr=changed":
+				optionAttrAsChanged = true
 			case "-f", "--file":
 				if len(os.Args) > index+2 {
 					optionFile = os.Args[index+2]
@@ -167,6 +179,9 @@ func main() {
 	}
 	if optionWithOwn || optionOwnAsChanged {
 		btrfsdiff.ConsiderChownOp(optionOwnAsChanged)
+	}
+	if optionWithAttr || optionAttrAsChanged {
+		btrfsdiff.ConsiderXattrOp(optionAttrAsChanged)
 	}
 
 	var changes []string
