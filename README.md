@@ -300,7 +300,8 @@ With a lot of thanks to :
 
 Copyright © 2020-2021 Michael Bideau [France]
 
-This file is part of *btrfs-diff-go*.
+All the *btrfs-diff-go* source codes (every file but README.md and LICENSE) are licensed under the
+_GPLv3+_ license.
 
 *btrfs-diff-go* is free software: you can redistribute it and/or modify it under the terms of the GNU
 General Public License as published by the Free Software Foundation, either version 3 of the
