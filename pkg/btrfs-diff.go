@@ -41,12 +41,13 @@ const (
 	opIgnore
 	opCreate
 	opModify
+	opTimes
 	opDelete
 	opRename // Special cased -- we need two paths
 	opEnd
 )
 
-var names []string = []string{"!!!", "ignored", "added", "changed", "deleted", "renamed", "END"}
+var names []string = []string{"!!!", "ignored", "added", "changed", "times", "deleted", "renamed", "END"}
 
 func (op operation) String() string {
 	return names[op]
@@ -400,6 +401,12 @@ func (diff *diffInst) Changes() []string {
 				if name == "/" && newFiles[name].Name == "" {
 					if debug {
 						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, opUnspec, newFiles[name])
+					}
+				// time modification
+				} else if newFiles[name].ChangeType == opTimes {
+					ret = append(ret, fmt.Sprintf("%10v: %v", opTimes, name))
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", opTimes, name, newFiles[name], node)
 					}
 				} else {
 					// TODO diff equality only
@@ -821,7 +828,7 @@ func SetDebug(status bool) {
 // SetUtimeOpModify consider the Utime instruction as a modification
 func SetUtimeOpModify() {
 	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG] Utimes will count as modification\n")
+		fmt.Fprintf(os.Stderr, "[DEBUG] Utimes will not be ignored\n")
 	}
-	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opTimes}
 }
