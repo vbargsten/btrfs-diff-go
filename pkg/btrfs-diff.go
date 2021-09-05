@@ -649,7 +649,9 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				}
 
 				// the usual way to read param have failed, trying one for the specific case of 'write' operation
-				fmt.Fprintf(os.Stderr, "[DEBUG]        re-reading param (C.BTRFS_SEND_A_FILE_OFFSET) ...\n")
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]        re-reading param (C.BTRFS_SEND_A_FILE_OFFSET) ...\n")
+				}
 				path, err = command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
 				if err != nil {
 					return err
