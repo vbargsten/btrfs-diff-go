@@ -154,9 +154,9 @@ func main() {
 					skip = true
 				}
 			default:
-				if len(argSubvolParent) > 0 {
+				if len(argSubvolParent) == 0 {
 					argSubvolParent = arg
-				} else if len(argSubvolChild) > 0 {
+				} else if len(argSubvolChild) == 0 {
 					argSubvolChild = arg
 				}
 		}
