@@ -166,11 +166,10 @@ func (diff *diffInst) tagPath(path string, changeType operation) {
 	// not a deletion
 	} else {
 
-		// TODO replace those two op by just different from the opUnSpec
-		// Why this? if fileNode.Original != nil {
-		if !(fileNode.ChangeType == opCreate && changeType == opModify) {
+		// not a creation nor the current operation a change
+		if (fileNode.ChangeType != opCreate || (changeType != opModify && changeType != opTimes)) {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]            node ChangeType is different from '%v' and '%v' (%v)\n", opCreate, opModify, fileNode.ChangeType)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            current operation is not a modification, or the current node ChangeType is not '%v' (%v)\n", opCreate, fileNode.ChangeType)
 				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", changeType)
 			}
 			fileNode.ChangeType = changeType
