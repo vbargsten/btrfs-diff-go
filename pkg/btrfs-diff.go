@@ -90,7 +90,7 @@ func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
 	commandsDefs[C.BTRFS_SEND_C_TRUNCATE] = commandType{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
 	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandType{Name: "BTRFS_SEND_C_CHMOD", Op: opModify}
 	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
-	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opIgnore}
 
 	commandsDefs[C.BTRFS_SEND_C_END] = commandType{Name: "BTRFS_SEND_C_END", Op: opEnd}
 	commandsDefs[C.BTRFS_SEND_C_UPDATE_EXTENT] = commandType{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
@@ -816,4 +816,12 @@ func SetDebug(status bool) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] DEBUG mode enabled\n")
 	}
+}
+
+// SetUtimeOpModify consider the Utime instruction as a modification
+func SetUtimeOpModify() {
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] Utimes will count as modification\n")
+	}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opModify}
 }

@@ -83,6 +83,7 @@ func main() {
 	var optionHelp bool = false
 	var optionDebug bool = false
 	var optionFile string = ""
+	var optionWithTimes bool = false
 	var argSubvolParent string = ""
 	var argSubvolChild string = ""
 
@@ -100,6 +101,8 @@ func main() {
 				optionHelp = true
 			case "--debug":
 				optionDebug = true
+			case "--with-times":
+				optionWithTimes = true
 			case "-f", "--file":
 				if len(os.Args) > index+2 {
 					optionFile = os.Args[index+2]
@@ -121,6 +124,10 @@ func main() {
 
 	if optionDebug {
 		btrfsdiff.SetDebug(true)
+	}
+
+	if optionWithTimes {
+		btrfsdiff.SetUtimeOpModify()
 	}
 
 	var changes []string
