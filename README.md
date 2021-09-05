@@ -105,7 +105,7 @@ First, install the required dependencies (example for *Debian* / *Ubuntu*)
 Use the convenient `go get` :
 
 ```sh
-~> go get github.com/mbideau/btrfs-diff-go
+~> go install github.com/mbideau/btrfs-diff-go
 ```
 
 That will create a binary named _btrfs-diff-go_ in `$GOPATH/bin`.
