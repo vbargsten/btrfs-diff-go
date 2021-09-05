@@ -112,6 +112,7 @@ for A in "$SNAPS_DIR"/*; do
             echo "FAIL: $A $B" | sed "s|$TEST_DIR/\?||g"
             cat -s "$TMPDIR"/b_diff | grep -v '^-changed' | grep '^[+-][^+-]' | sed "s|^|$A $B: |" | sed "s|$TEST_DIR/\?||g"
             failed=true
+            break 2
         fi
     done
 done
