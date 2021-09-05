@@ -79,54 +79,85 @@ SEE ALSO
 }
 
 func main() {
-	var first string
-	var second string
-	if len(os.Args) <= 2 || os.Args[1] == "-h" || os.Args[1] == "--help" {
+
+	var optionHelp bool = false
+	var optionDebug bool = false
+	var optionFile string = ""
+	var argSubvolParent string = ""
+	var argSubvolChild string = ""
+
+	skip := false
+	for index, arg := range os.Args[1:] {
+
+		// hacky way to compensate for lack of 'continue 2' instruction
+		if skip {
+			skip = false
+			continue
+		}
+
+		switch(arg) {
+			case "-h", "--help":
+				optionHelp = true
+			case "--debug":
+				optionDebug = true
+			case "-f", "--file":
+				if len(os.Args) > index+2 {
+					optionFile = os.Args[index+2]
+					skip = true
+				}
+			default:
+				if len(argSubvolParent) > 0 {
+					argSubvolParent = arg
+				} else if len(argSubvolChild) > 0 {
+					argSubvolChild = arg
+				}
+		}
+	}
+
+	if len(os.Args) <= 2 || optionHelp {
 		usage(path.Base(os.Args[0]))
-	} else {
-		first = os.Args[1]
-		second = os.Args[2]
-		if len(os.Args) == 4 && first == "--debug" {
-			btrfsdiff.SetDebug(true)
-			first = os.Args[2]
-			second = os.Args[3]
-		}
+		os.Exit(0)
+	}
 
-		var changes []string
-		var err error
+	if optionDebug {
+		btrfsdiff.SetDebug(true)
+	}
 
-		// --file option specified with a stream file
-		if first == "-f" || first == "--file" {
-			var streamfile string
-			streamfile, _ = filepath.Abs(second)
+	var changes []string
+	var err error
+	if len(optionFile) > 0 {
+		var streamfile string
+		streamfile, err = filepath.Abs(optionFile)
+		if err == nil {
 			changes, err = btrfsdiff.GetChangesFromStreamFile(streamfile)
-
-			// parent and child arguments
-		} else {
-
-			var parent string
-			var child string
-			parent, _ = filepath.Abs(first)
-			child, _ = filepath.Abs(second)
-			changes, err = btrfsdiff.GetChangesFromTwoSubvolumes(child, parent)
 		}
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
+	} else {
+		var parent string
+		var child string
+		parent, err = filepath.Abs(argSubvolParent)
+		if err == nil {
+			child, err = filepath.Abs(argSubvolChild)
+			if err == nil {
+				changes, err = btrfsdiff.GetChangesFromTwoSubvolumes(child, parent)
+			}
 		}
+	}
 
-		// if there are changes/differences
-		if len(changes) > 0 {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
 
-			// sort the list alphabetically (default)
-			sort.Strings(changes)
+	// if there are changes/differences
+	if len(changes) > 0 {
 
-			// print changes
-			fmt.Printf("%v\n", strings.Join(changes, "\n"))
+		// sort the list alphabetically (default)
+		sort.Strings(changes)
 
-			// exit 1 if there are differences
-			os.Exit(1)
-		}
+		// print changes
+		fmt.Printf("%v\n", strings.Join(changes, "\n"))
+
+		// exit 1 if there are differences
+		os.Exit(1)
 	}
 }
