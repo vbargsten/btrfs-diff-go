@@ -59,6 +59,12 @@ OPTIONS
 		but if you also specify '=changed' they will be labelled
 		'changed'.
 
+	--with-own[=changed]
+		By defautl ownership modifications are ignored. With that option
+		they will be taken into account. They are labelled as 'own'
+		but if you also specify '=changed' they will be labelled
+		'changed'.
+
 EXAMPLES
 
 	Get the differences between two snapshots.
@@ -99,6 +105,8 @@ func main() {
 	var optionTimesAsChanged bool = false
 	var optionWithPerms bool = false
 	var optionPermsAsChanged bool = false
+	var optionWithOwn bool = false
+	var optionOwnAsChanged bool = false
 	var argSubvolParent string = ""
 	var argSubvolChild string = ""
 
@@ -124,6 +132,10 @@ func main() {
 				optionWithPerms = true
 			case "--with-perms=changed":
 				optionPermsAsChanged = true
+			case "--with-own":
+				optionWithOwn = true
+			case "--with-own=changed":
+				optionOwnAsChanged = true
 			case "-f", "--file":
 				if len(os.Args) > index+2 {
 					optionFile = os.Args[index+2]
@@ -152,6 +164,9 @@ func main() {
 	}
 	if optionWithPerms || optionPermsAsChanged {
 		btrfsdiff.ConsiderChmodOp(optionPermsAsChanged)
+	}
+	if optionWithOwn || optionOwnAsChanged {
+		btrfsdiff.ConsiderChownOp(optionOwnAsChanged)
 	}
 
 	var changes []string

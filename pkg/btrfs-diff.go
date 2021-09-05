@@ -43,12 +43,13 @@ const (
 	opModify
 	opTimes
 	opPermissions
+	opOwnership
 	opDelete
 	opRename // Special cased -- we need two paths
 	opEnd
 )
 
-var names []string = []string{"!!!", "ignored", "added", "changed", "times", "perms", "deleted", "renamed", "END"}
+var names []string = []string{"!!!", "ignored", "added", "changed", "times", "perms", "own", "deleted", "renamed", "END"}
 
 func (op operation) String() string {
 	return names[op]
@@ -91,7 +92,7 @@ func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
 
 	commandsDefs[C.BTRFS_SEND_C_TRUNCATE] = commandType{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
 	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandType{Name: "BTRFS_SEND_C_CHMOD", Op: opIgnore}
-	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opIgnore}
 	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opIgnore}
 
 	commandsDefs[C.BTRFS_SEND_C_END] = commandType{Name: "BTRFS_SEND_C_END", Op: opEnd}
@@ -168,7 +169,7 @@ func (diff *diffInst) tagPath(path string, changeType operation) {
 	} else {
 
 		// not a creation nor the current operation a change
-		if (fileNode.ChangeType != opCreate || (changeType != opModify && changeType != opTimes && changeType != opPermissions)) {
+		if (fileNode.ChangeType != opCreate || (changeType != opModify && changeType != opTimes && changeType != opPermissions && changeType != opOwnership)) {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]            current operation is not a modification, or the current node ChangeType is not '%v' (%v)\n", opCreate, fileNode.ChangeType)
 				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", changeType)
@@ -403,7 +404,7 @@ func (diff *diffInst) Changes() []string {
 						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, opUnspec, newFiles[name])
 					}
 				// time modification or permissions
-				} else if (newFiles[name].ChangeType == opTimes || newFiles[name].ChangeType == opPermissions) {
+				} else if (newFiles[name].ChangeType == opTimes || newFiles[name].ChangeType == opPermissions || newFiles[name].ChangeType == opOwnership) {
 					ret = append(ret, fmt.Sprintf("%10v: %v", newFiles[name].ChangeType, name))
 					if debug {
 						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newFiles[name].ChangeType, name, newFiles[name], node)
@@ -847,4 +848,16 @@ func ConsiderChmodOp(asOpModify bool) {
 		fmt.Fprintf(os.Stderr, "[DEBUG] Chmod will be considered as '%v'\n", opRef)
 	}
 	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandType{Name: "BTRFS_SEND_C_CHMOD", Op: opRef}
+}
+
+// ConsiderChownOp consider the Chown instruction (eventually turned into a 'changed' operation)
+func ConsiderChownOp(asOpModify bool) {
+	var opRef operation = opOwnership
+	if asOpModify {
+		opRef = opModify
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] Chown will be considered as '%v'\n", opRef)
+	}
+	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opRef}
 }
