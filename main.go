@@ -53,6 +53,12 @@ OPTIONS
 		but if you also specify '=changed' they will be labelled
 		'changed'.
 
+	--with-perms[=changed]
+		By defautl permission modifications are ignored. With that option
+		they will be taken into account. They are labelled as 'perms'
+		but if you also specify '=changed' they will be labelled
+		'changed'.
+
 EXAMPLES
 
 	Get the differences between two snapshots.
@@ -91,6 +97,8 @@ func main() {
 	var optionFile string = ""
 	var optionWithTimes bool = false
 	var optionTimesAsChanged bool = false
+	var optionWithPerms bool = false
+	var optionPermsAsChanged bool = false
 	var argSubvolParent string = ""
 	var argSubvolChild string = ""
 
@@ -112,6 +120,10 @@ func main() {
 				optionWithTimes = true
 			case "--with-times=changed":
 				optionTimesAsChanged = true
+			case "--with-perms":
+				optionWithPerms = true
+			case "--with-perms=changed":
+				optionPermsAsChanged = true
 			case "-f", "--file":
 				if len(os.Args) > index+2 {
 					optionFile = os.Args[index+2]
@@ -137,6 +149,9 @@ func main() {
 
 	if optionWithTimes || optionTimesAsChanged {
 		btrfsdiff.ConsiderUtimeOp(optionTimesAsChanged)
+	}
+	if optionWithPerms || optionPermsAsChanged {
+		btrfsdiff.ConsiderChmodOp(optionPermsAsChanged)
 	}
 
 	var changes []string
