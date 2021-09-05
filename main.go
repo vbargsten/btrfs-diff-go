@@ -87,7 +87,6 @@ func main() {
 		first = os.Args[1]
 		second = os.Args[2]
 		if len(os.Args) == 4 && first == "--debug" {
-			fmt.Println("[DEBUG] Debug enabled")
 			btrfsdiff.SetDebug(true)
 			first = os.Args[2]
 			second = os.Args[3]

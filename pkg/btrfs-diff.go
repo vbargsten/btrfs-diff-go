@@ -120,114 +120,257 @@ type diffInst struct {
 
 func (diff *diffInst) tagPath(path string, changeType operation) {
 	if debug {
-		fmt.Printf("[DEBUG] TRACE %10v %v\n", changeType, path)
+		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for matching node\n")
 	}
-	fileNode := diff.find(path, changeType == opCreate)
+	isNew := changeType == opCreate
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]                is new? %t (only when '%v')\n", isNew, opCreate)
+	}
+	fileNode := diff.find(path, isNew)
+
+
+	// in case of deletion
 	if changeType == opDelete {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]            that's a deletion\n")
+		}
 		if fileNode.Original == nil {
-			fmt.Fprintf(os.Stderr, "deleting path %v which was created in same diff?\n", path)
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]            no Original tree existing\n")
+			}
+			fmt.Fprintf(os.Stderr, "[DEBUG]            BUG? deleting path %v which was created in same diff?\n", path)
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node in the Parent tree (may be New tree)\n")
 		}
 		delete(fileNode.Parent.Children, fileNode.Name)
-	} else { // Why this? if fileNode.Original != nil {
-		if !(fileNode.ChangeType == opCreate && changeType == opModify) {
-			fileNode.ChangeType = changeType
-		}
-	}
-	if changeType == opDelete {
+
 		// If we deleted /this/ node, it sure as hell needs no children.
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node children\n")
+		}
 		fileNode.Children = nil
 		if fileNode.Original != nil {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]            node had an Original tree\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]            setting its ChangeType to '%v'\n", opDelete)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node children\n")
+			}
 			// Leave behind a sentinel in the Original structure.
 			fileNode.Original.ChangeType = opDelete
 			fileNode.Original.verifyDelete(path)
 			fileNode.Original.Children = nil
 		}
+
+	// not a deletion
+	} else {
+
+		// TODO replace those two op by just different from the opUnSpec
+		// Why this? if fileNode.Original != nil {
+		if !(fileNode.ChangeType == opCreate && changeType == opModify) {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]            node ChangeType is different from '%v' and '%v' (%v)\n", opCreate, opModify, fileNode.ChangeType)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", changeType)
+			}
+			fileNode.ChangeType = changeType
+		}
 	}
-	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
 func (node *nodeInst) verifyDelete(path string) {
 	for _, child := range node.Children {
 		if child.ChangeType != opDelete && child.ChangeType != opRename {
-			fmt.Fprintf(os.Stderr, "deleting parent of node %v in %v which is not gone", node, path)
+			fmt.Fprintf(os.Stderr, "[DEBUG]            BUG? deleting parent of node %v in %v which is not gone", node, path)
 		}
 	}
 }
 
 func (diff *diffInst) rename(from string, to string) {
 	if debug {
-		fmt.Printf("[DEBUG] TRACE %10v %v\n", "rename", from)
-		fmt.Printf("[DEBUG] TRACE %10v %v\n", "rename_to", to)
+		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for 'from' node\n")
 	}
 	fromNode := diff.find(from, false)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            removing it from its parent node\n")
+	}
 	delete(fromNode.Parent.Children, fromNode.Name)
 	if fromNode.Original != nil {
 		// if fromNode had an original, we must mark that path destroyed.
 		fromNode.Original.ChangeType = opRename
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]            the original node have its ChangeType set to '%v'\n", opRename)
+		}
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for 'to' node\n")
 	}
 	toNode := diff.find(to, true)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            adding it to its parent node\n")
+	}
 	toNode.Parent.Children[toNode.Name] = fromNode
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node Name is replaced by the 'to' node Name\n")
+	}
 	fromNode.Name = toNode.Name
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node ChangeType is set to '%v'\n", opCreate)
+	}
 	fromNode.ChangeType = opCreate
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node Parent is assigned the 'to' node Parent\n")
+	}
 	fromNode.Parent = toNode.Parent
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
 func (diff *diffInst) find(path string, isNew bool) *nodeInst {
 	if diff.New.Original == nil {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                the New tree is not referencing the Original one, fixing that\n")
+		}
 		diff.New.Original = &diff.Original
 	}
 	if path == "" {
+		if debug {
+			newNodeName := diff.New.Name
+			if len(newNodeName) > 0 {
+				newNodeName = "/"
+			}
+			fmt.Fprintf(os.Stderr, "[DEBUG]                empty path, returning the node from the top level of the New tree '%v'\n", newNodeName)
+		}
 		return &diff.New
 	}
+
+	// foreach part of the path (in the 'New' tree)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]                splitted path in parts, processing each one ...\n")
+	}
 	parts := strings.Split(path, "/")
+
+	// 'current' node is actually the parent of the current 'part'
 	current := &diff.New
 	for i, part := range parts {
 		nodeName := strings.Trim(part, "\x00")
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                    - %v\n", nodeName)
+		}
+		if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                        parent node is '/%v'\n", current.Name)
+		}
 		if current.Children == nil {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                            no children: set a new empty children list/map\n")
+			}
 			current.Children = make(map[string]*nodeInst)
 		}
+
+		// get the node in the current tree (New tree)
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                        getting the node in the current tree (New tree)\n")
+		}
 		newNode := current.Children[nodeName]
+
+		// the current part/node doesn't exist
 		if newNode == nil {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' doesn't exist: creating it\n", nodeName)
+			}
+
+			// creating it
 			current.Children[nodeName] = &nodeInst{}
 			newNode = current.Children[nodeName]
+			newNode.Name = nodeName
+			newNode.Parent = current
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                        added to its parent node (New tree)\n")
+			}
+
+			// no previous tree
 			original := current.Original
 			if original == nil {
-				if !(isNew && i == len(parts)-1) {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                        no previous tree (Original tree)\n")
+				}
+				// was !(isNew && i == len(parts)-1) which is the same, but replaced for consistency reason
+				if !isNew || i < len(parts)-1 {
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the current part isn't the last one\n")
+					}
 					// Either a path has a route in the original, or it's been
 					// explicitly created. Once we traverse into a path without
 					// an original, we know the full tree, so getting here is a
 					// sign we did it wrong.
-					fmt.Fprintf(os.Stderr, "referenced path %v cannot exist\n", path)
+					fmt.Fprintf(os.Stderr, "[DEBUG]                        BUG? referenced path %v cannot exist\n", path)
 					os.Exit(1)
 				}
+
+			// had a previous tree
 			} else {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                        a previous tree exists (Original tree)\n")
+				}
 				if original.Children == nil {
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG]                            no children: set a new empty children list/map\n")
+					}
 					original.Children = make(map[string]*nodeInst)
 				}
+
+				// get the node in the previous tree (Original tree)
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                        getting the node in the previous tree (Original tree)\n")
+				}
 				newOriginal := original.Children[nodeName]
+
+				// the node didn't exist before
 				if newOriginal == nil {
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' didn't exist before (Original tree)\n", nodeName)
+					}
 					if !isNew || i < len(parts)-1 {
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG] ACK %v %v %v %v %v\n", original, isNew, path, nodeName, newOriginal)
+							fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the current part isn't the last one\n")
 						}
+
 						// Was meant to already exist, so make sure it did!
+						if debug {
+							fmt.Fprintf(os.Stderr, "[DEBUG]                        that path part is supposed to exist, so creating it\n")
+						}
 						original.Children[nodeName] = &nodeInst{}
 						newOriginal = original.Children[nodeName]
 						newOriginal.Name = nodeName
 						newOriginal.Parent = original
 						newNode.Original = newOriginal
+						if debug {
+							fmt.Fprintf(os.Stderr, "[DEBUG]                        added to its parent node (Original tree)\n")
+						}
 					}
 				}
 			}
-			newNode.Name = nodeName
-			newNode.Parent = current
-		} else if isNew && i == len(parts)-1 {
-			// As this is the target of a create, we should expect to see
-			// nothing here.
-			fmt.Fprintf(os.Stderr, "overwritten path %v already existed\n", path)
+
+		// the current part/node exists
+		} else {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' exists (New tree)\n", newNode.Name)
+			}
+			if isNew && i == len(parts)-1 {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'true' and the current part is the last one\n")
+				}
+
+				// As this is the target of a create, we should expect to see
+				// nothing here.
+				fmt.Fprintf(os.Stderr, "[DEBUG]                        BUG? overwritten path %v already existed\n", path)
+			}
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                        'current' node is now '%v'\n", newNode.Name)
 		}
 		current = newNode
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]                returning 'current' node '%v'\n", current.Name)
 	}
 	return current
 }
@@ -313,10 +456,11 @@ func changes(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 }
 
 func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
-	if n > input.Buffered() {
+	buffered := input.Buffered()
+	if n > buffered {
 		if debug {
-			fmt.Printf("[DEBUG] peekAndDiscard() need to read more bytes '%v' than there are buffered '%v'\n", n, input.Buffered())
-			fmt.Printf("[DEBUG] peekAndDiscard() increasing the buffer size to match the need\n")
+			fmt.Fprintf(os.Stderr, "[DEBUG] peekAndDiscard() need to read more bytes '%v' than there are buffered '%v'\n", n, buffered)
+			fmt.Fprintf(os.Stderr, "[DEBUG] peekAndDiscard() increasing the buffer size to match the need\n")
 		}
 		input = bufio.NewReaderSize(input, n)
 	}
@@ -344,16 +488,19 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 		return nil, fmt.Errorf("short read on command checksum: %v", err)
 	}
 	cmdSize := binary.LittleEndian.Uint32(cmdSizeB)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] command size: '%v' (%v)\n", cmdSize, cmdSizeB)
+	}
 	cmdData, err := peekAndDiscard(input, int(cmdSize))
 	if err != nil {
 		return nil, fmt.Errorf("short read on command body: %v", err)
 	}
 	cmdType := binary.LittleEndian.Uint16(cmdTypeB)
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] command type: '%v' (%v)\n", cmdType, cmdTypeB)
+	}
 	if cmdType > C.BTRFS_SEND_C_MAX {
 		return nil, fmt.Errorf("stream contains invalid command type %v", cmdType)
-	}
-	if debug {
-		fmt.Printf("[DEBUG] Cmd %v; type %v\n", cmdData, commandsDefs[cmdType].Name)
 	}
 	return &commandInst{
 		Type: &commandsDefs[cmdType],
@@ -407,52 +554,109 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	if ver != 1 {
 		return fmt.Errorf("unexpected stream version %v", ver)
 	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] reading each command until EOF ...\n")
+	}
 	for {
+		// read input and get the command type and body
 		var command *commandInst
 		command, err = readCommand(input)
 		if err != nil {
 			return err
 		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG] %v -> %v\n", command.Type.Name, command.Type.Op)
+		}
+
+		// analyze the command ...
+
+		// unspecified: bug
 		if command.Type.Op == opUnspec {
 			return fmt.Errorf("unexpected command %v", command)
+
+		// ignored operation
 		} else if command.Type.Op == opIgnore {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]    ignoring (as specified in command definitions)\n")
+			}
 			continue
+
+		// rename operation
 		} else if command.Type.Op == opRename {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]    rename operation\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH) ...\n")
+			}
+
+			// reading 'from' and 'to' params
 			var fromPath string
 			var toPath string
 			fromPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				return err
 			}
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        from: '%v'\n", fromPath)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH_TO) ...\n")
+			}
 			toPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH_TO)
 			if err != nil {
 				return err
 			}
 			if debug {
-				fmt.Printf("[DEBUG] TRACE %25v %v %v\n", command.Type.Name, fromPath, toPath)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        to: '%v'\n", toPath)
+			}
+
+			// add the renaming operation to the list of changes
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        processing that operation\n")
 			}
 			diff.rename(fromPath, toPath)
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        operation processed\n")
+			}
+
+		// end operation
 		} else if command.Type.Op == opEnd {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG] END\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]    END operation\n")
 			}
 			break
+
+		// other operations
 		} else {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]    other operation (%v)\n", command.Type.Op)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH) ...\n")
+			}
+
+			// read the 'path' param
 			var path string
 			path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				if err.Error() != "expect type 15; got 18" {
 					return err
 				}
+
+				// the usual way to read param have failed, trying one for the specific case of 'write' operation
+				fmt.Fprintf(os.Stderr, "[DEBUG]        re-reading param (C.BTRFS_SEND_A_FILE_OFFSET) ...\n")
 				path, err = command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
 				if err != nil {
 					return err
 				}
 			}
 			if debug {
-				fmt.Printf("[DEBUG] TRACE %25v %v\n", command.Type.Name, path)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        path: '/%v'\n", path)
+			}
+
+			// adding the operation to the list of changes
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        processing that operation\n")
 			}
 			diff.tagPath(path, command.Type.Op)
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        operation processed\n")
+			}
 		}
 	}
 	return nil
@@ -539,7 +743,7 @@ func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 
 func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	if debug {
-		fmt.Printf("[DEBUG] opening file '%v'\n", streamfile)
+		fmt.Fprintf(os.Stderr, "[DEBUG] opening file '%v'\n", streamfile)
 	}
 	f, err := os.Open(streamfile)
 	if err != nil {
@@ -609,4 +813,7 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 // SetDebug set the debug mode flag
 func SetDebug(status bool) {
 	debug = status
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG] DEBUG mode enabled\n")
+	}
 }
