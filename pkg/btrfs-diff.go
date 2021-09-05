@@ -479,21 +479,13 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 	if err != nil {
 		return nil, fmt.Errorf("short read on command size: %v", err)
 	}
-	cmdTypeB, err := peekAndDiscard(input, 2)
-	if err != nil {
-		return nil, fmt.Errorf("short read on command type: %v", err)
-	}
-	_, err = peekAndDiscard(input, 4)
-	if err != nil {
-		return nil, fmt.Errorf("short read on command checksum: %v", err)
-	}
 	cmdSize := binary.LittleEndian.Uint32(cmdSizeB)
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] command size: '%v' (%v)\n", cmdSize, cmdSizeB)
 	}
-	cmdData, err := peekAndDiscard(input, int(cmdSize))
+	cmdTypeB, err := peekAndDiscard(input, 2)
 	if err != nil {
-		return nil, fmt.Errorf("short read on command body: %v", err)
+		return nil, fmt.Errorf("short read on command type: %v", err)
 	}
 	cmdType := binary.LittleEndian.Uint16(cmdTypeB)
 	if debug {
@@ -501,6 +493,14 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 	}
 	if cmdType > C.BTRFS_SEND_C_MAX {
 		return nil, fmt.Errorf("stream contains invalid command type %v", cmdType)
+	}
+	_, err = peekAndDiscard(input, 4)
+	if err != nil {
+		return nil, fmt.Errorf("short read on command checksum: %v", err)
+	}
+	cmdData, err := peekAndDiscard(input, int(cmdSize))
+	if err != nil {
+		return nil, fmt.Errorf("short read on command body: %v", err)
 	}
 	return &commandInst{
 		Type: &commandsDefs[cmdType],
