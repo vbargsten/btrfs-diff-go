@@ -281,6 +281,21 @@ By order of priority :
   real life conditions runs)
 
 
+## Authors and contributors
+
+### Authors
+
+Originally written by: [David Buckley](https://github.com/bucko909)
+
+Extended, fixed, and maintained by: [Michael Bideau](https://github.com/mbideau)
+
+### Contributors
+
+With a lot of thanks to :
+
+* [Mek101](https://github.com/Mek101): very good crash-tester :wink:
+
+
 ## Copyright and License GPLv3
 
 Copyright © 2020-2021 Michael Bideau [France]
