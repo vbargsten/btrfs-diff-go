@@ -100,9 +100,9 @@ First, install the required dependencies (example for *Debian* / *Ubuntu*)
 ~> sudo apt install golang libbtrfs-dev
 ```
 
-### Using `go get` command
+### Using `go install` command
 
-Use the convenient `go get` :
+Use the convenient `go install` :
 
 ```sh
 ~> go install github.com/mbideau/btrfs-diff-go
