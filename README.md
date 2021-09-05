@@ -105,7 +105,7 @@ First, install the required dependencies (example for *Debian* / *Ubuntu*)
 Use the convenient `go get` :
 
 ```sh
-~> sudo go get https://github.com/mbideau/btrfs-diff-go
+~> go get github.com/mbideau/btrfs-diff-go
 ```
 
 That will create a binary named _btrfs-diff-go_ in `$GOPATH/bin`.
@@ -143,7 +143,7 @@ instantaneous.
 For example, you can get the differences between *snap1* and *snap2* with the following command :
 
 ```sh
-~> btrfs send --quiet --no-data -p snap1 snap2 | LC_ALL=C btrfs receive --quiet --dump > /tmp/btrfs.dump
+~> sudo btrfs send --quiet --no-data -p snap1 snap2 | LC_ALL=C btrfs receive --quiet --dump > /tmp/btrfs.dump
 ```
 
 Note that this dump is not really human readable. Moreover it contains operations, not differences.
