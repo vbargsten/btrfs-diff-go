@@ -157,18 +157,19 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 		}
 		if fileNode.Original == nil {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]            no Original tree existing\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]                no previous version of the node exist\n")
 			}
 			fmt.Fprintf(os.Stderr, "[DEBUG]            BUG? deleting path %v which was created in same diff?\n", path)
 		}
+		// deleting the node in new files tree
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node in the Parent tree (may be New tree)\n")
+			fmt.Fprintf(os.Stderr, "[DEBUG]                deleting the node in the Parent tree (New tree)\n")
 		}
 		delete(fileNode.Parent.Children, fileNode.Name)
 
 		// If we deleted /this/ node, it sure as hell needs no children.
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node children\n")
+			fmt.Fprintf(os.Stderr, "[DEBUG]                deleting the node children\n")
 		}
 		fileNode.Children = nil
 
@@ -392,11 +393,14 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 					oldParent.Children = make(map[string]*nodeInst)
 				}
 
-				// get the node in the previous tree (Original tree)
+				// get the node in the old tree (Original tree)
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG]                        getting the node in the previous tree (Original tree)\n")
+					fmt.Fprintf(os.Stderr, "[DEBUG]                                getting the old node (Original tree)\n")
 				}
 				oldNode := oldParent.Children[nodeName]
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                                    found: %v\n", oldNode)
+				}
 
 				// the node didn't exist before
 				if oldNode == nil {
@@ -405,12 +409,12 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 					}
 					if !isNew || i < len(parts)-1 {
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the parent part isn't the last one\n")
+							fmt.Fprintf(os.Stderr, "[DEBUG]                                isNew is 'false' or the parent part isn't the last one\n")
 						}
 
 						// Was meant to already exist, so make sure it did!
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                        that path part is supposed to exist, so creating it\n")
+							fmt.Fprintf(os.Stderr, "[DEBUG]                                creating old node\n")
 						}
 						oldParent.Children[nodeName] = &nodeInst{}
 						oldNode = oldParent.Children[nodeName]
@@ -418,8 +422,19 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 						oldNode.Parent = oldParent
 						newNode.Original = oldNode
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                        added to its parent node (Original tree)\n")
+							fmt.Fprintf(os.Stderr, "[DEBUG]                                    old node created: %v\n", oldNode)
+							fmt.Fprintf(os.Stderr, "[DEBUG]                                    added to old parent node '%v' (Original tree)\n", oldParent.Name)
 						}
+					} else {
+						if debug {
+							fmt.Fprintf(os.Stderr, "[DEBUG]                                    not creating the old node because it is new (%t)\n", isNew)
+						}
+					}
+
+				// old node exist
+				} else {
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG]                                previous node version: %v\n", oldNode)
 					}
 				}
 			}
@@ -555,9 +570,9 @@ func (diff *diffInst) Changes() []string {
 		}
 
 		ret = append(ret, fmt.Sprintf("%7v: %v", opCreate, path))
-			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v\n", node.State, path)
-			}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v\n", node.State, path)
+		}
 	}
 	return ret
 }
