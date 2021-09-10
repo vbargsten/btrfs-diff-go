@@ -684,7 +684,7 @@ func (command *commandInst) ReadParam(expectedType int) (string, error) {
 	if int(paramLength)+4 > len(command.data) {
 		return "", fmt.Errorf("short command param; length was %v but only %v left", paramLength, len(command.data)-4)
 	}
-	ret := string(command.data[4 : 4+paramLength])
+	ret := strings.Trim(string(command.data[4 : 4+paramLength]), "\x00")
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            param: '%v' (str:'%v', raw: %v)\n", ret, string(command.data[4 : 4+paramLength]), command.data[4 : 4+paramLength])
 	}
