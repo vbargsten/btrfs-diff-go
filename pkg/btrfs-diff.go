@@ -56,48 +56,48 @@ func (op operation) String() string {
 	return names[op]
 }
 
-type commandType struct {
+type commandMapOp struct {
 	Name string
 	Op   operation
 }
 
 type commandInst struct {
-	Type *commandType
-	body []byte
+	Type *commandMapOp
+	data []byte
 }
 
-func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
-	var commandsDefs [C.__BTRFS_SEND_C_MAX]commandType
-	commandsDefs[C.BTRFS_SEND_C_UNSPEC] = commandType{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
+func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandMapOp {
+	var commandsDefs [C.__BTRFS_SEND_C_MAX]commandMapOp
+	commandsDefs[C.BTRFS_SEND_C_UNSPEC] = commandMapOp{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
 
-	commandsDefs[C.BTRFS_SEND_C_SUBVOL] = commandType{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
-	commandsDefs[C.BTRFS_SEND_C_SNAPSHOT] = commandType{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_SUBVOL] = commandMapOp{Name: "BTRFS_SEND_C_SUBVOL", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_SNAPSHOT] = commandMapOp{Name: "BTRFS_SEND_C_SNAPSHOT", Op: opIgnore}
 
-	commandsDefs[C.BTRFS_SEND_C_MKFILE] = commandType{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
-	commandsDefs[C.BTRFS_SEND_C_MKDIR] = commandType{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
-	commandsDefs[C.BTRFS_SEND_C_MKNOD] = commandType{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
-	commandsDefs[C.BTRFS_SEND_C_MKFIFO] = commandType{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
-	commandsDefs[C.BTRFS_SEND_C_MKSOCK] = commandType{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
-	commandsDefs[C.BTRFS_SEND_C_SYMLINK] = commandType{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKFILE] = commandMapOp{Name: "BTRFS_SEND_C_MKFILE", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKDIR] = commandMapOp{Name: "BTRFS_SEND_C_MKDIR", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKNOD] = commandMapOp{Name: "BTRFS_SEND_C_MKNOD", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKFIFO] = commandMapOp{Name: "BTRFS_SEND_C_MKFIFO", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_MKSOCK] = commandMapOp{Name: "BTRFS_SEND_C_MKSOCK", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_SYMLINK] = commandMapOp{Name: "BTRFS_SEND_C_SYMLINK", Op: opCreate}
 
-	commandsDefs[C.BTRFS_SEND_C_RENAME] = commandType{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
-	commandsDefs[C.BTRFS_SEND_C_LINK] = commandType{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
-	commandsDefs[C.BTRFS_SEND_C_UNLINK] = commandType{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
-	commandsDefs[C.BTRFS_SEND_C_RMDIR] = commandType{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
+	commandsDefs[C.BTRFS_SEND_C_RENAME] = commandMapOp{Name: "BTRFS_SEND_C_RENAME", Op: opRename}
+	commandsDefs[C.BTRFS_SEND_C_LINK] = commandMapOp{Name: "BTRFS_SEND_C_LINK", Op: opCreate}
+	commandsDefs[C.BTRFS_SEND_C_UNLINK] = commandMapOp{Name: "BTRFS_SEND_C_UNLINK", Op: opDelete}
+	commandsDefs[C.BTRFS_SEND_C_RMDIR] = commandMapOp{Name: "BTRFS_SEND_C_RMDIR", Op: opDelete}
 
-	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandType{Name: "BTRFS_SEND_C_SET_XATTR", Op: opIgnore}
-	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandType{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandMapOp{Name: "BTRFS_SEND_C_SET_XATTR", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandMapOp{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opIgnore}
 
-	commandsDefs[C.BTRFS_SEND_C_WRITE] = commandType{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
-	commandsDefs[C.BTRFS_SEND_C_CLONE] = commandType{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_WRITE] = commandMapOp{Name: "BTRFS_SEND_C_WRITE", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_CLONE] = commandMapOp{Name: "BTRFS_SEND_C_CLONE", Op: opModify}
 
-	commandsDefs[C.BTRFS_SEND_C_TRUNCATE] = commandType{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
-	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandType{Name: "BTRFS_SEND_C_CHMOD", Op: opIgnore}
-	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opIgnore}
-	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_TRUNCATE] = commandMapOp{Name: "BTRFS_SEND_C_TRUNCATE", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandMapOp{Name: "BTRFS_SEND_C_CHMOD", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandMapOp{Name: "BTRFS_SEND_C_CHOWN", Op: opIgnore}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandMapOp{Name: "BTRFS_SEND_C_UTIMES", Op: opIgnore}
 
-	commandsDefs[C.BTRFS_SEND_C_END] = commandType{Name: "BTRFS_SEND_C_END", Op: opEnd}
-	commandsDefs[C.BTRFS_SEND_C_UPDATE_EXTENT] = commandType{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
+	commandsDefs[C.BTRFS_SEND_C_END] = commandMapOp{Name: "BTRFS_SEND_C_END", Op: opEnd}
+	commandsDefs[C.BTRFS_SEND_C_UPDATE_EXTENT] = commandMapOp{Name: "BTRFS_SEND_C_UPDATE_EXTENT", Op: opModify}
 	// Sanity check (hopefully no holes).
 	for i, command := range commandsDefs {
 		if i != C.BTRFS_SEND_C_UNSPEC && command.Op == opUnspec {
@@ -107,12 +107,12 @@ func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandType {
 	return &commandsDefs
 }
 
-var commandsDefs *[C.__BTRFS_SEND_C_MAX]commandType = initCommandsDefinitions()
+var commandsDefs *[C.__BTRFS_SEND_C_MAX]commandMapOp = initCommandsDefinitions()
 
 type nodeInst struct {
 	Children   map[string]*nodeInst
 	Name       string
-	ChangeType operation
+	State      operation
 	Parent     *nodeInst
 	Original   *nodeInst
 }
@@ -122,19 +122,19 @@ type diffInst struct {
 	New      nodeInst
 }
 
-func (diff *diffInst) tagPath(path string, changeType operation) {
+func (diff *diffInst) processSingleParamOp(path string, Op operation) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for matching node\n")
 	}
-	isNew := changeType == opCreate
+	isNew := Op == opCreate
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]                is new? %t (only when '%v')\n", isNew, opCreate)
 	}
-	fileNode := diff.find(path, isNew)
+	fileNode := diff.updateBothTreesAndReturnNode(path, isNew)
 
 
 	// in case of deletion
-	if changeType == opDelete {
+	if Op == opDelete {
 		if debug {
 			fmt.Fprintf(os.Stderr, "[DEBUG]            that's a deletion\n")
 		}
@@ -157,11 +157,11 @@ func (diff *diffInst) tagPath(path string, changeType operation) {
 		if fileNode.Original != nil {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]            node had an Original tree\n")
-				fmt.Fprintf(os.Stderr, "[DEBUG]            setting its ChangeType to '%v'\n", opDelete)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            setting its State to '%v'\n", opDelete)
 				fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node children\n")
 			}
 			// Leave behind a sentinel in the Original structure.
-			fileNode.Original.ChangeType = opDelete
+			fileNode.Original.State = opDelete
 			fileNode.Original.verifyDelete(path)
 			fileNode.Original.Children = nil
 		}
@@ -170,44 +170,44 @@ func (diff *diffInst) tagPath(path string, changeType operation) {
 	} else {
 
 		// not a creation nor the current operation is a modification
-		if (fileNode.ChangeType != opCreate || (changeType != opModify && changeType != opTimes && changeType != opPermissions && changeType != opOwnership && changeType != opAttributes)) {
+		if (fileNode.State != opCreate || (Op != opModify && Op != opTimes && Op != opPermissions && Op != opOwnership && Op != opAttributes)) {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]            current operation is not a modification, or the current node ChangeType is not '%v' (%v)\n", opCreate, fileNode.ChangeType)
-				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", changeType)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            current operation is not a modification, or the current node State is not '%v' (%v)\n", opCreate, fileNode.State)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", Op)
 			}
-			fileNode.ChangeType = changeType
+			fileNode.State = Op
 		}
 	}
 }
 
 func (node *nodeInst) verifyDelete(path string) {
 	for _, child := range node.Children {
-		if child.ChangeType != opDelete && child.ChangeType != opRename {
+		if child.State != opDelete && child.State != opRename {
 			fmt.Fprintf(os.Stderr, "[DEBUG]            BUG? deleting parent of node %v in %v which is not gone", node, path)
 		}
 	}
 }
 
-func (diff *diffInst) rename(from string, to string) {
+func (diff *diffInst) processTwoParamsOp(from string, to string) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for 'from' node\n")
 	}
-	fromNode := diff.find(from, false)
+	fromNode := diff.updateBothTreesAndReturnNode(from, false)
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            removing it from its parent node\n")
 	}
 	delete(fromNode.Parent.Children, fromNode.Name)
 	if fromNode.Original != nil {
 		// if fromNode had an original, we must mark that path destroyed.
-		fromNode.Original.ChangeType = opRename
+		fromNode.Original.State = opRename
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]            the original node have its ChangeType set to '%v'\n", opRename)
+			fmt.Fprintf(os.Stderr, "[DEBUG]            the original node have its State set to '%v'\n", opRename)
 		}
 	}
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for 'to' node\n")
 	}
-	toNode := diff.find(to, true)
+	toNode := diff.updateBothTreesAndReturnNode(to, true)
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            adding it to its parent node\n")
 	}
@@ -217,9 +217,9 @@ func (diff *diffInst) rename(from string, to string) {
 	}
 	fromNode.Name = toNode.Name
 	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node ChangeType is set to '%v'\n", opCreate)
+		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node State is set to '%v'\n", opCreate)
 	}
-	fromNode.ChangeType = opCreate
+	fromNode.State = opCreate
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node Parent is assigned the 'to' node Parent\n")
 	}
@@ -227,7 +227,7 @@ func (diff *diffInst) rename(from string, to string) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
-func (diff *diffInst) find(path string, isNew bool) *nodeInst {
+func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nodeInst {
 	if diff.New.Original == nil {
 		if debug {
 			fmt.Fprintf(os.Stderr, "[DEBUG]                the New tree is not referencing the Original one, fixing that\n")
@@ -251,58 +251,57 @@ func (diff *diffInst) find(path string, isNew bool) *nodeInst {
 	}
 	parts := strings.Split(path, "/")
 
-	// 'current' node is actually the parent of the current 'part'
-	current := &diff.New
+	parent := &diff.New
 	for i, part := range parts {
 		nodeName := strings.Trim(part, "\x00")
 		if debug {
 			fmt.Fprintf(os.Stderr, "[DEBUG]                    - %v\n", nodeName)
 		}
 		if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]                        parent node is '/%v'\n", current.Name)
+				fmt.Fprintf(os.Stderr, "[DEBUG]                        parent node is '/%v'\n", parent.Name)
 		}
-		if current.Children == nil {
+		if parent.Children == nil {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]                            no children: set a new empty children list/map\n")
 			}
-			current.Children = make(map[string]*nodeInst)
+			parent.Children = make(map[string]*nodeInst)
 		}
 
-		// get the node in the current tree (New tree)
+		// get the node in the parent tree (New tree)
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]                        getting the node in the current tree (New tree)\n")
+			fmt.Fprintf(os.Stderr, "[DEBUG]                        getting the node in the parent tree (New tree)\n")
 		}
-		newNode := current.Children[nodeName]
+		newNode := parent.Children[nodeName]
 
-		// the current part/node doesn't exist
+		// the parent part/node doesn't exist
 		if newNode == nil {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' doesn't exist: creating it\n", nodeName)
 			}
 
 			// creating it
-			current.Children[nodeName] = &nodeInst{}
-			newNode = current.Children[nodeName]
+			parent.Children[nodeName] = &nodeInst{}
+			newNode = parent.Children[nodeName]
 			newNode.Name = nodeName
-			newNode.Parent = current
+			newNode.Parent = parent
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]                        added to its parent node (New tree)\n")
 			}
 
 			// no previous tree
-			original := current.Original
-			if original == nil {
+			oldParent := parent.Original
+			if oldParent == nil {
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG]                        no previous tree (Original tree)\n")
 				}
 				// was !(isNew && i == len(parts)-1) which is the same, but replaced for consistency reason
 				if !isNew || i < len(parts)-1 {
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the current part isn't the last one\n")
+						fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the parent part isn't the last one\n")
 					}
-					// Either a path has a route in the original, or it's been
+					// Either a path has a route in the oldParent, or it's been
 					// explicitly created. Once we traverse into a path without
-					// an original, we know the full tree, so getting here is a
+					// an oldParent, we know the full tree, so getting here is a
 					// sign we did it wrong.
 					fmt.Fprintf(os.Stderr, "[DEBUG]                        BUG? referenced path %v cannot exist\n", path)
 					os.Exit(1)
@@ -313,38 +312,38 @@ func (diff *diffInst) find(path string, isNew bool) *nodeInst {
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG]                        a previous tree exists (Original tree)\n")
 				}
-				if original.Children == nil {
+				if oldParent.Children == nil {
 					if debug {
 						fmt.Fprintf(os.Stderr, "[DEBUG]                            no children: set a new empty children list/map\n")
 					}
-					original.Children = make(map[string]*nodeInst)
+					oldParent.Children = make(map[string]*nodeInst)
 				}
 
 				// get the node in the previous tree (Original tree)
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG]                        getting the node in the previous tree (Original tree)\n")
 				}
-				newOriginal := original.Children[nodeName]
+				oldNode := oldParent.Children[nodeName]
 
 				// the node didn't exist before
-				if newOriginal == nil {
+				if oldNode == nil {
 					if debug {
 						fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' didn't exist before (Original tree)\n", nodeName)
 					}
 					if !isNew || i < len(parts)-1 {
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the current part isn't the last one\n")
+							fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'false' or the parent part isn't the last one\n")
 						}
 
 						// Was meant to already exist, so make sure it did!
 						if debug {
 							fmt.Fprintf(os.Stderr, "[DEBUG]                        that path part is supposed to exist, so creating it\n")
 						}
-						original.Children[nodeName] = &nodeInst{}
-						newOriginal = original.Children[nodeName]
-						newOriginal.Name = nodeName
-						newOriginal.Parent = original
-						newNode.Original = newOriginal
+						oldParent.Children[nodeName] = &nodeInst{}
+						oldNode = oldParent.Children[nodeName]
+						oldNode.Name = nodeName
+						oldNode.Parent = oldParent
+						newNode.Original = oldNode
 						if debug {
 							fmt.Fprintf(os.Stderr, "[DEBUG]                        added to its parent node (Original tree)\n")
 						}
@@ -352,14 +351,14 @@ func (diff *diffInst) find(path string, isNew bool) *nodeInst {
 				}
 			}
 
-		// the current part/node exists
+		// the parent part/node exists
 		} else {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' exists (New tree)\n", newNode.Name)
 			}
 			if isNew && i == len(parts)-1 {
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'true' and the current part is the last one\n")
+					fmt.Fprintf(os.Stderr, "[DEBUG]                        isNew is 'true' and the parent part is the last one\n")
 				}
 
 				// As this is the target of a create, we should expect to see
@@ -368,18 +367,18 @@ func (diff *diffInst) find(path string, isNew bool) *nodeInst {
 			}
 		}
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]                        'current' node is now '%v'\n", newNode.Name)
+			fmt.Fprintf(os.Stderr, "[DEBUG]                        'parent' node is now '%v'\n", newNode.Name)
 		}
-		current = newNode
+		parent = newNode
 	}
 	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG]                returning 'current' node '%v'\n", current.Name)
+		fmt.Fprintf(os.Stderr, "[DEBUG]                returning 'parent' node '%v'\n", parent.Name)
 	}
-	return current
+	return parent
 }
 
 func (node *nodeInst) String() string {
-	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.ChangeType, node.Name)
+	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.State, node.Name)
 }
 
 func (diff *diffInst) String() string {
@@ -389,27 +388,27 @@ func (diff *diffInst) String() string {
 func (diff *diffInst) Changes() []string {
 	newFiles := make(map[string]*nodeInst)
 	oldFiles := make(map[string]*nodeInst)
-	changes(&diff.New, "", newFiles)
-	changes(&diff.Original, "", oldFiles)
+	resolvePathsAndFlatten(&diff.New, "", newFiles)
+	resolvePathsAndFlatten(&diff.Original, "", oldFiles)
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] new: %v\n[DEBUG] %v\n", newFiles, &diff.New)
 		fmt.Fprintf(os.Stderr, "[DEBUG] old: %v\n[DEBUG] %v\n", oldFiles, &diff.Original)
 	}
 	var ret []string
 	for name, node := range oldFiles {
-		if newFiles[name] != nil && node.ChangeType == opUnspec {
+		if newFiles[name] != nil && node.State == opUnspec {
 			if node.Children == nil {
-				newNodeChangeType := newFiles[name].ChangeType
+				newNodeState := newFiles[name].State
 				// specific case when there might be an empty change detected on the root of the subvolume
 				if name == "/" && newFiles[name].Name == "" {
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.ChangeType:%v, new_node:%v)\n", name, opUnspec, newFiles[name])
+						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.State:%v, new_node:%v)\n", name, opUnspec, newFiles[name])
 					}
 				// time modification or permissions
-				} else if (newNodeChangeType == opTimes || newNodeChangeType == opPermissions || newNodeChangeType == opOwnership || newNodeChangeType == opAttributes) {
-					ret = append(ret, fmt.Sprintf("%10v: %v", newNodeChangeType, name))
+				} else if (newNodeState == opTimes || newNodeState == opPermissions || newNodeState == opOwnership || newNodeState == opAttributes) {
+					ret = append(ret, fmt.Sprintf("%10v: %v", newNodeState, name))
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newNodeChangeType, name, newFiles[name], node)
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newNodeState, name, newFiles[name], node)
 					}
 				} else {
 					// TODO diff equality only
@@ -421,20 +420,20 @@ func (diff *diffInst) Changes() []string {
 			}
 			delete(newFiles, name)
 		} else {
-			if node.ChangeType != opDelete && node.ChangeType != opRename {
-				fmt.Fprintf(os.Stderr, "unexpected ChangeType on original %v: %v", name, node.ChangeType)
+			if node.State != opDelete && node.State != opRename {
+				fmt.Fprintf(os.Stderr, "unexpected State on oldParent %v: %v", name, node.State)
 			}
-			if (node.ChangeType == opDelete || node.ChangeType == opRename) && newFiles[name] != nil && newFiles[name].ChangeType == opCreate {
+			if (node.State == opDelete || node.State == opRename) && newFiles[name] != nil && newFiles[name].State == opCreate {
 				ret = append(ret, fmt.Sprintf("%10v: %v", opModify, name))
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG] appended (opDelete||opRename): %10v: %v\n", opModify, name)
 				}
 				delete(newFiles, name)
 			} else {
-				//fmt.Fprintf(os.Stderr, "DEBUG DEBUG %v %v %v\n ", node.ChangeType, newFiles[name], name)
-				ret = append(ret, fmt.Sprintf("%10v: %v", node.ChangeType, name))
+				//fmt.Fprintf(os.Stderr, "DEBUG DEBUG %v %v %v\n ", node.State, newFiles[name], name)
+				ret = append(ret, fmt.Sprintf("%10v: %v", node.State, name))
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %10v: %v\n", node.ChangeType, name)
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %10v: %v\n", node.State, name)
 				}
 			}
 		}
@@ -448,20 +447,20 @@ func (diff *diffInst) Changes() []string {
 	return ret
 }
 
-func changes(node *nodeInst, prefix string, ret map[string]*nodeInst) {
+func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG] changes(%v, %v)\n", node.Name, prefix)
+		fmt.Fprintf(os.Stderr, "[DEBUG] resolvePathsAndFlatten(%v, %v)\n", node.Name, prefix)
 	}
 	newPrefix := prefix + node.Name
 	if newPrefix != "" {
 		ret[newPrefix] = node
 	}
-	if node.ChangeType == opCreate {
+	if node.State == opCreate {
 		// TODO diff equality only
 		return
 	}
 	for _, child := range node.Children {
-		changes(child, newPrefix+"/", ret)
+		resolvePathsAndFlatten(child, newPrefix+"/", ret)
 	}
 }
 
@@ -510,28 +509,28 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 	}
 	cmdData, err := peekAndDiscard(input, int(cmdSize))
 	if err != nil {
-		return nil, fmt.Errorf("short read on command body: %v", err)
+		return nil, fmt.Errorf("short read on command data: %v", err)
 	}
 	return &commandInst{
 		Type: &commandsDefs[cmdType],
-		body: cmdData,
+		data: cmdData,
 	}, nil
 }
 
 func (command *commandInst) ReadParam(expectedType int) (string, error) {
-	if len(command.body) < 4 {
+	if len(command.data) < 4 {
 		return "", fmt.Errorf("no more parameters")
 	}
-	paramType := binary.LittleEndian.Uint16(command.body[0:2])
+	paramType := binary.LittleEndian.Uint16(command.data[0:2])
 	if int(paramType) != expectedType {
 		return "", fmt.Errorf("expect type %v; got %v", expectedType, paramType)
 	}
-	paramLength := binary.LittleEndian.Uint16(command.body[2:4])
-	if int(paramLength)+4 > len(command.body) {
-		return "", fmt.Errorf("short command param; length was %v but only %v left", paramLength, len(command.body)-4)
+	paramLength := binary.LittleEndian.Uint16(command.data[2:4])
+	if int(paramLength)+4 > len(command.data) {
+		return "", fmt.Errorf("short command param; length was %v but only %v left", paramLength, len(command.data)-4)
 	}
-	ret := string(command.body[4 : 4+paramLength])
-	command.body = command.body[4+paramLength:]
+	ret := string(command.data[4 : 4+paramLength])
+	command.data = command.data[4+paramLength:]
 	return ret, nil
 }
 
@@ -568,7 +567,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 		fmt.Fprintf(os.Stderr, "[DEBUG] reading each command until EOF ...\n")
 	}
 	for {
-		// read input and get the command type and body
+		// read input and get the command type and data
 		var command *commandInst
 		command, err = readCommand(input)
 		if err != nil {
@@ -621,7 +620,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        processing that operation\n")
 			}
-			diff.rename(fromPath, toPath)
+			diff.processTwoParamsOp(fromPath, toPath)
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        operation processed\n")
 			}
@@ -665,7 +664,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        processing that operation\n")
 			}
-			diff.tagPath(path, command.Type.Op)
+			diff.processSingleParamOp(path, command.Type.Op)
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        operation processed\n")
 			}
@@ -839,7 +838,7 @@ func ConsiderUtimeOp(asOpModify bool) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] Utimes will be considered as '%v'\n", opRef)
 	}
-	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandType{Name: "BTRFS_SEND_C_UTIMES", Op: opRef}
+	commandsDefs[C.BTRFS_SEND_C_UTIMES] = commandMapOp{Name: "BTRFS_SEND_C_UTIMES", Op: opRef}
 }
 
 // ConsiderChmodOp consider the Chmod instruction (eventually turned into a 'changed' operation)
@@ -851,7 +850,7 @@ func ConsiderChmodOp(asOpModify bool) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] Chmod will be considered as '%v'\n", opRef)
 	}
-	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandType{Name: "BTRFS_SEND_C_CHMOD", Op: opRef}
+	commandsDefs[C.BTRFS_SEND_C_CHMOD] = commandMapOp{Name: "BTRFS_SEND_C_CHMOD", Op: opRef}
 }
 
 // ConsiderChownOp consider the Chown instruction (eventually turned into a 'changed' operation)
@@ -863,7 +862,7 @@ func ConsiderChownOp(asOpModify bool) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] Chown will be considered as '%v'\n", opRef)
 	}
-	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandType{Name: "BTRFS_SEND_C_CHOWN", Op: opRef}
+	commandsDefs[C.BTRFS_SEND_C_CHOWN] = commandMapOp{Name: "BTRFS_SEND_C_CHOWN", Op: opRef}
 }
 
 // ConsiderXattrOp consider the Xattr instruction (eventually turned into a 'changed' operation)
@@ -875,6 +874,6 @@ func ConsiderXattrOp(asOpModify bool) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] Xattr will be considered as '%v'\n", opRef)
 	}
-	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandType{Name: "BTRFS_SEND_C_SET_XATTR", Op: opRef}
-	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandType{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opRef}
+	commandsDefs[C.BTRFS_SEND_C_SET_XATTR] = commandMapOp{Name: "BTRFS_SEND_C_SET_XATTR", Op: opRef}
+	commandsDefs[C.BTRFS_SEND_C_REMOVE_XATTR] = commandMapOp{Name: "BTRFS_SEND_C_REMOVE_XATTR", Op: opRef}
 }
