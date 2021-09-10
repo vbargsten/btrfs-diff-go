@@ -802,27 +802,40 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 		default:
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]    other operation (%v)\n", command.Type.Op)
-				fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH) ...\n")
 			}
 
 			// read the 'path' param
 			var path string
-			path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
-			if err != nil {
-				if err.Error() != "expect type 15; got 18" {
-					ret = err
-					break
-				}
-
-				// the usual way to read param have failed, trying one for the specific case of 'write' operation
+			if (command.Type.Name == "BTRFS_SEND_C_CLONE" && command.Type.Op == opModify) {
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG]        re-reading param (C.BTRFS_SEND_A_FILE_OFFSET) ...\n")
+					fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_FILE_OFFSET) ...\n")
 				}
-				path, err = command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
+				_, err = command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
 				if err != nil {
 					ret = err
 					break
 				}
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_CLONE_LEN) ...\n")
+				}
+				_, err = command.ReadParam(C.BTRFS_SEND_A_CLONE_LEN)
+				if err != nil {
+					ret = err
+					break
+				}
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_CLONE_PATH) ...\n")
+				}
+				path, err = command.ReadParam(C.BTRFS_SEND_A_CLONE_PATH)
+			} else {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH) ...\n")
+				}
+				path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
+			}
+			if err != nil {
+				ret = err
+				break
 			}
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        path: '%v'\n", path)
