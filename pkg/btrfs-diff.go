@@ -174,7 +174,7 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 			debugInd(4, "no previous version of the node exist")
 			// if parent wasn't renamed its a bug
 			if fileNode.Parent == nil || fileNode.Parent.State != opCreate || fileNode.Parent.Original == nil || fileNode.Parent.Original.State != opRename {
-			debugInd(4, "BUG? deleting path %v which was created in same diff?", path)
+				fmt.Fprintf(os.Stderr, "BUG? deleting path %v which was created in same diff?", path)
 				os.Exit(1)
 
 			// parent node was renamed
