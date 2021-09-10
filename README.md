@@ -3,7 +3,7 @@
 Analyze differences between two BTRFS snapshots (like
 [GNU diff](https://www.gnu.org/software/diffutils/manual/) for directories).
 
-It is a single GO script (package) of ~ 540 lines of code (without blanks and comments), plus a main
+It is a single GO script (package) of ~ 600 lines of code (without blanks and comments), plus a main
 script (binary) of 95 loc.
 
 ![Release](https://img.shields.io/github/v/release/mbideau/btrfs-diff-go)
