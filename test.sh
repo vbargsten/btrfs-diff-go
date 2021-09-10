@@ -100,7 +100,7 @@ for A in "$SNAPS_DIR"/*; do
     for B in "$SNAPS_DIR"/*; do
         if [ "$A" = "$B" ]; then continue; fi
         $use_sudo "$BTRFS_DIFF_BIN" "$A" "$B" > "$TMPDIR"/a_raw 2>&1 || true
-        cut -b4- "$TMPDIR"/a_raw | sort | grep -v '^changed: $' > "$TMPDIR"/a || true
+        sort "$TMPDIR"/a_raw > "$TMPDIR"/a || true
         LC_ALL=C diff -qr "$A" "$B" | \
             sed "s|$A|old|; s|$B|new|g; s|: |/|; s/Only in new/  added: /; s/Only in old/deleted: /; s|Files old/.* and new/\(.*\) differ|changed: /\1|" | \
             sed "/File .* is a fifo while file .* is a fifo/d" | \
@@ -129,9 +129,9 @@ echo "-- Now testing against a tricky stream file ..."
 failed=true
 if ! "$BTRFS_DIFF_BIN" --file "$THIS_DIR"/test.data >"$TMPDIR"/diff.out; then
     cat >"$TMPDIR"/diff.src <<ENDCAT
-     added: /file1_1
-     added: /file1_2
-   deleted: /file2_1
+  added: /file1_1
+  added: /file1_2
+deleted: /file2_1
 ENDCAT
     if diff "$TMPDIR"/diff.out "$TMPDIR"/diff.src; then
         failed=false
