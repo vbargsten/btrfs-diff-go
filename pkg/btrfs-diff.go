@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"syscall"
@@ -27,6 +28,7 @@ import (
 )
 
 var debugMode bool = false
+var debugLogger *log.Logger
 var debugPrefix string = "[DEBUG] "
 var debugIndTab string = "    "
 
@@ -137,7 +139,7 @@ type diffInst struct {
 // debug print a message (to STDERR) only if debug mode is enabled
 func debug(msg string, params ...interface{}) {
 	if debugMode {
-		fmt.Fprintf(os.Stderr, "%s%s\n", debugPrefix, fmt.Sprintf(msg, params...))
+		debugLogger.Printf(msg, params...)
 	}
 }
 
@@ -148,7 +150,7 @@ func debugInd(ind int, msg string, params ...interface{}) {
 		for i:=0; i<ind; i++ {
 			indentation += debugIndTab
 		}
-		fmt.Fprintf(os.Stderr, "%s%s%s\n", debugPrefix, indentation, fmt.Sprintf(msg, params...))
+		debugLogger.Printf(indentation + msg, params...)
 	}
 }
 
@@ -947,7 +949,10 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 // SetDebug set the debug mode flag
 func SetDebug(status bool) {
 	debugMode = status
-	debug("DEBUG mode enabled")
+	if debugMode {
+		debugLogger = log.New(os.Stderr, debugPrefix, log.Lmicroseconds)
+		debug("DEBUG mode enabled")
+	}
 }
 
 // ConsiderUtimeOp consider the Utime instruction (eventually turned into a 'changed' operation)
