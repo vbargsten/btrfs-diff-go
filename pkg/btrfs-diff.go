@@ -137,7 +137,7 @@ type diffInst struct {
 //       have its time modified and its ownership at the same time, even if this is actually the
 //       case in reality. That simplified design looses information. The last operation will
 //       not override the previous one.
-func (diff *diffInst) processSingleParamOp(path string, Op operation) {
+func (diff *diffInst) processSingleParamOp(Op operation, path string) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for matching node\n")
 	}
@@ -211,7 +211,7 @@ func (node *nodeInst) verifyDelete(path string) {
 // processTwoParamsOp is the processing of double params commands (update the Diff double tree)
 //   It is used only by the 'rename' operation, although it could be used for 'link' op, but this
 //   one is treated as a single param, for simplicity's sake.
-func (diff *diffInst) processTwoParamsOp(from string, to string) {
+func (diff *diffInst) processTwoParamsOp(Op operation, from string, to string) {
 
 	// from node
 	if debug {
@@ -221,12 +221,30 @@ func (diff *diffInst) processTwoParamsOp(from string, to string) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            found: %v\n", fromNode)
 	}
-	delete(fromNode.Parent.Children, fromNode.Name)
-	if fromNode.Original != nil {
-		// if fromNode had an original, we must mark that path destroyed.
-		fromNode.Original.State = opRename
+
+	// renaming specifics
+	if Op == opRename {
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]            the original node have its State set to '%v'\n", opRename)
+			fmt.Fprintf(os.Stderr, "[DEBUG]            it's a renaming\n")
+		}
+
+		// deleting the node from the new files tree, because it should only exist in the old tree
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                removing it from its parent node '%v' (New tree)\n", fromNode.Parent.Name)
+		}
+		delete(fromNode.Parent.Children, fromNode.Name)
+		// Note: now the fromNode is orphan
+
+		if fromNode.Original != nil {
+
+			// if fromNode had an original, we must mark that path destroyed.
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                set old node St to '%v' (Original tree)\n", opRename)
+			}
+			fromNode.Original.State = opRename
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                old node is now: %v\n", fromNode.Original)
+			}
 		}
 	}
 
@@ -238,20 +256,41 @@ func (diff *diffInst) processTwoParamsOp(from string, to string) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            found: %v\n", toNode)
 	}
-	toNode.Parent.Children[toNode.Name] = fromNode
-	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node Name is replaced by the 'to' node Name\n")
+
+	// renaming specifics
+	if Op == opRename {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]            it's a renaming (bis)\n")
+		}
+
+		// attaching the old node (which was orphan) to the new files tree
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                adding the 'from' node to the 'to' node parent tree at name '%v' (New tree)\n", toNode.Name)
+		}
+		toNode.Parent.Children[toNode.Name] = fromNode
+
+		// updating its name
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                'from' node Name is replaced by the 'to' node Name '%v'\n", toNode.Name)
+		}
+		fromNode.Name = toNode.Name
+
+		// ensuring its status is 'added'
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                'from' node Op is set to '%v'\n", opCreate)
+		}
+		fromNode.State = opCreate
+
+		// updating the parent node
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                'from' node Parent is assigned the 'to' node Parent '%v'\n", toNode.Parent.Name)
+		}
+		fromNode.Parent = toNode.Parent
+
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                now node is: %v\n", toNode.Parent.Children[toNode.Name])
+		}
 	}
-	fromNode.Name = toNode.Name
-	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node State is set to '%v'\n", opCreate)
-	}
-	fromNode.State = opCreate
-	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG]            'from' node Parent is assigned the 'to' node Parent\n")
-	}
-	fromNode.Parent = toNode.Parent
-	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
 // updateBothTreesAndReturnNode return the searched node, after it has updated both Diff trees (old and new)
@@ -736,7 +775,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        updating the diff double tree\n")
 			}
-			diff.processTwoParamsOp(fromPath, toPath)
+			diff.processTwoParamsOp(command.Type.Op, fromPath, toPath)
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        '%v' operation processed\n", command.Type.Op)
 			}
@@ -780,7 +819,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        processing operation '%v'\n", command.Type.Op)
 			}
-			diff.processSingleParamOp(path, command.Type.Op)
+			diff.processSingleParamOp(command.Type.Op, path)
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        operation '%v' processed\n", command.Type.Op)
 			}
