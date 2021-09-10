@@ -34,8 +34,10 @@ import (
 
 var debug bool = false
 
+// operation is the result of one or more instructions/commands
 type operation int
 
+// list of available operations
 const (
 	opUnspec operation = iota
 	opIgnore
@@ -46,27 +48,33 @@ const (
 	opOwnership
 	opAttributes
 	opDelete
-	opRename // Special cased -- we need two paths
+	opRename
 	opEnd
 )
 
+// operation's names
 var names []string = []string{"!!!", "ignored", "added", "changed", "times", "perms", "own", "attr", "deleted", "renamed", "END"}
 
+// convert an operation to a string
 func (op operation) String() string {
 	return names[op]
 }
 
+// commandMapOp is the mapping between a command and a resulting operation
 type commandMapOp struct {
 	Name string
 	Op   operation
 }
 
+// commandInst is the instanciation of a command and its data
 type commandInst struct {
 	Type *commandMapOp
 	data []byte
 }
 
+// initCommandsDefinitions initialize the commands mapping with operations
 func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandMapOp {
+
 	var commandsDefs [C.__BTRFS_SEND_C_MAX]commandMapOp
 	commandsDefs[C.BTRFS_SEND_C_UNSPEC] = commandMapOp{Name: "BTRFS_SEND_C_UNSPEC", Op: opUnspec}
 
@@ -107,8 +115,14 @@ func initCommandsDefinitions() *[C.__BTRFS_SEND_C_MAX]commandMapOp {
 	return &commandsDefs
 }
 
+// do the initialization of the commands mapping
 var commandsDefs *[C.__BTRFS_SEND_C_MAX]commandMapOp = initCommandsDefinitions()
 
+// nodeInst is the representation of a file in a tree, with metadata attached
+//   Children   is the files in the directory (if the file is a directory)
+//   Op is the name of the operation done on that node
+//   Parent     is the parent directory of the file
+//   Original   is the file in its previous version (new file may have an older version)
 type nodeInst struct {
 	Children   map[string]*nodeInst
 	Name       string
@@ -117,11 +131,17 @@ type nodeInst struct {
 	Original   *nodeInst
 }
 
+// diffInst is the structure that hold two trees, one new, one old
 type diffInst struct {
 	Original nodeInst
 	New      nodeInst
 }
 
+// processSingleParamOp is the processing of single param commands (update the Diff double tree)
+// Note: that code only allow to register for one operation per file. For example, a file can't
+//       have its time modified and its ownership at the same time, even if this is actually the
+//       case in reality. That simplified design looses information. The last operation will
+//       not override the previous one.
 func (diff *diffInst) processSingleParamOp(path string, Op operation) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for matching node\n")
@@ -154,6 +174,8 @@ func (diff *diffInst) processSingleParamOp(path string, Op operation) {
 			fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node children\n")
 		}
 		fileNode.Children = nil
+
+		// old version exist
 		if fileNode.Original != nil {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]            node had an Original tree\n")
@@ -180,6 +202,7 @@ func (diff *diffInst) processSingleParamOp(path string, Op operation) {
 	}
 }
 
+// verifyDelete checks that every children of the node are either deleted or renamed
 func (node *nodeInst) verifyDelete(path string) {
 	for _, child := range node.Children {
 		if child.State != opDelete && child.State != opRename {
@@ -188,7 +211,12 @@ func (node *nodeInst) verifyDelete(path string) {
 	}
 }
 
+// processTwoParamsOp is the processing of double params commands (update the Diff double tree)
+//   It is used only by the 'rename' operation, although it could be used for 'link' op, but this
+//   one is treated as a single param, for simplicity's sake.
 func (diff *diffInst) processTwoParamsOp(from string, to string) {
+
+	// from node
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for 'from' node\n")
 	}
@@ -204,6 +232,8 @@ func (diff *diffInst) processTwoParamsOp(from string, to string) {
 			fmt.Fprintf(os.Stderr, "[DEBUG]            the original node have its State set to '%v'\n", opRename)
 		}
 	}
+
+	// to node
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for 'to' node\n")
 	}
@@ -227,6 +257,7 @@ func (diff *diffInst) processTwoParamsOp(from string, to string) {
 	//fmt.Fprintf(os.Stderr, "intermediate=%v\n", diff)
 }
 
+// updateBothTreesAndReturnNode return the searched node, after it has updated both Diff trees (old and new)
 func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nodeInst {
 	if diff.New.Original == nil {
 		if debug {
@@ -288,7 +319,7 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 				fmt.Fprintf(os.Stderr, "[DEBUG]                        added to its parent node (New tree)\n")
 			}
 
-			// no previous tree
+			// no previous version of the parent node
 			oldParent := parent.Original
 			if oldParent == nil {
 				if debug {
@@ -307,7 +338,7 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 					os.Exit(1)
 				}
 
-			// had a previous tree
+			// the parent node have a previous version
 			} else {
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG]                        a previous tree exists (Original tree)\n")
@@ -377,14 +408,17 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 	return parent
 }
 
+// convert a node to a string
 func (node *nodeInst) String() string {
 	return fmt.Sprintf("(%v, %v, %v)", node.Children, node.State, node.Name)
 }
 
+// convert a tree to a string
 func (diff *diffInst) String() string {
 	return "\n\t" + strings.Join((diff.Changes())[:], "\n\t") + "\n"
 }
 
+// Changes return the list of changes for a diff double tree
 func (diff *diffInst) Changes() []string {
 	newFiles := make(map[string]*nodeInst)
 	oldFiles := make(map[string]*nodeInst)
@@ -395,6 +429,8 @@ func (diff *diffInst) Changes() []string {
 		fmt.Fprintf(os.Stderr, "[DEBUG] old: %v\n[DEBUG] %v\n", oldFiles, &diff.Original)
 	}
 	var ret []string
+
+	// old files
 	for name, node := range oldFiles {
 		if newFiles[name] != nil && node.State == opUnspec {
 			if node.Children == nil {
@@ -438,6 +474,8 @@ func (diff *diffInst) Changes() []string {
 			}
 		}
 	}
+
+	// new files
 	for name := range newFiles {
 		ret = append(ret, fmt.Sprintf("%10v: %v", opCreate, name))
 		if debug {
@@ -447,6 +485,7 @@ func (diff *diffInst) Changes() []string {
 	return ret
 }
 
+// resolvePathsAndFlatten generate a flat slice with full path mapped to nodes
 func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] resolvePathsAndFlatten(%v, %v)\n", node.Name, prefix)
@@ -464,6 +503,7 @@ func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeI
 	}
 }
 
+// peekAndDiscard return n bytes from the stream buffer, if required increase its size
 func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
 	buffered := input.Buffered()
 	if n > buffered {
@@ -483,6 +523,7 @@ func peekAndDiscard(input *bufio.Reader, n int) ([]byte, error) {
 	return data, nil
 }
 
+// readCommand return a command from reading and parsing the stream input
 func readCommand(input *bufio.Reader) (*commandInst, error) {
 	cmdSizeB, err := peekAndDiscard(input, 4)
 	if err != nil {
@@ -517,6 +558,7 @@ func readCommand(input *bufio.Reader) (*commandInst, error) {
 	}, nil
 }
 
+// ReadParam return a parameter of a command, if it matches the one expected
 func (command *commandInst) ReadParam(expectedType int) (string, error) {
 	if len(command.data) < 4 {
 		return "", fmt.Errorf("no more parameters")
@@ -534,10 +576,12 @@ func (command *commandInst) ReadParam(expectedType int) (string, error) {
 	return ret, nil
 }
 
+// readStream reads the stream and produce a diff, using the channel specified
 func readStream(stream *os.File, diff *diffInst, channel chan error) {
 	channel <- doReadStream(stream, diff)
 }
 
+// doReadStream reads the stream and produce a diff
 func doReadStream(stream *os.File, diff *diffInst) error {
 	// ensure that we catch the error from stream.Close()
 	var err error
@@ -673,6 +717,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	return nil
 }
 
+// getSubVolUID return the subvolume UID
 func getSubVolUID(path string) (C.__u64, error) {
 	var sus C.struct_subvol_uuid_search
 	var subvolInfo *C.struct_subvol_info
@@ -694,6 +739,7 @@ func getSubVolUID(path string) (C.__u64, error) {
 	return C.__u64(subvolInfo.root_id), nil
 }
 
+// btrfsSendSyscall write the file stream with the system call 'btrfs send'
 func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	// ensure that we catch the error from stream.Close()
 	var err error
@@ -732,6 +778,7 @@ func btrfsSendSyscall(stream *os.File, source string, subvolume string) error {
 	return nil
 }
 
+// btrfsSendDiff returns the differences between two subvolumes
 func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 	read, write, err := os.Pipe()
 	if err != nil {
@@ -752,6 +799,7 @@ func btrfsSendDiff(source, subvolume string) (*diffInst, error) {
 	return &diff, nil
 }
 
+// btrfsSendDiff returns the differences from a file stream
 func btrfsStreamFileDiff(streamfile string) (*diffInst, error) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] opening file '%v'\n", streamfile)
