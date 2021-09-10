@@ -521,8 +521,17 @@ func (diff *diffInst) Changes() []string {
 			debugInd(2, "found in new files (%v) and old node St is '%v'", newFileNode, opUnspec)
 			debugInd(2, "that's a changed file")
 
-			ret = append(ret, fmt.Sprintf("%7v: %v", newFileNode.State, path))
-			debugInd(4, "appended (node.St:%v): %7v: %v (%v) (%v)", opUnspec, newFileNode.State, path, newFileNode, node)
+			// file hasn't changed
+			if node.State == opUnspec && newFileNode.State == opUnspec {
+
+				debugInd(2, "found in new files (%v) and old node St is '%v'", newFileNode, opUnspec)
+				debugInd(2, "that's an unchanged file, not appending it to the list of changes")
+
+			// file has changed
+			} else {
+				ret = append(ret, fmt.Sprintf("%7v: %v", newFileNode.State, path))
+				debugInd(4, "appended (node.St:%v): %7v: %v (%v) (%v)", node.State, newFileNode.State, path, newFileNode, node)
+			}
 
 			// deleting the node from the new ones, to avoid being processed twice for the same info
 			debugInd(3, "deleting node in new files")
