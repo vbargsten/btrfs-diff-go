@@ -325,8 +325,10 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 	if diff.New.Original == nil {
 		debugInd(4, "the New tree is not referencing the Original one, fixing that")
 		diff.New.Original = &diff.Original
+		diff.New.Original.Name = "/"
 	}
 	if path == "" {
+		diff.New.Name = "/"
 		debugInd(4, "empty path, returning the node from the top level of the New tree '%v'", diff.New.Name)
 		return &diff.New
 	}
