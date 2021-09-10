@@ -308,10 +308,6 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 	}
 	if path == "" {
 		if debug {
-			newNodeName := diff.New.Name
-			if len(newNodeName) > 0 {
-				newNodeName = "/"
-			}
 			fmt.Fprintf(os.Stderr, "[DEBUG]                empty path, returning the node from the top level of the New tree '%v'\n", diff.New.Name)
 		}
 		return &diff.New
@@ -512,26 +508,9 @@ func (diff *diffInst) Changes() []string {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        that's a changed file\n")
 			}
 
-			if node.Children == nil {
-				newNodeState := newFileNode.State
-				// specific case when there might be an empty change detected on the root of the subvolume
-				if path == "/" && newFileNode.Name == "" {
-					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.State:%v, new_node:%v)\n", path, opUnspec, newFileNode)
-					}
-				// time modification or permissions
-				} else if (newNodeState == opTimes || newNodeState == opPermissions || newNodeState == opOwnership || newNodeState == opAttributes) {
-					ret = append(ret, fmt.Sprintf("%10v: %v", newNodeState, path))
-					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newNodeState, path, newFileNode, node)
-					}
-				} else {
-					// TODO diff equality only
-					ret = append(ret, fmt.Sprintf("%10v: %v", opModify, path))
-					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", opModify, path, newFileNode, node)
-					}
-				}
+			ret = append(ret, fmt.Sprintf("%10v: %v", newFileNode.State, path))
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                appended (node.St:%v): %10v: %v (%v) (%v)\n", opUnspec, newFileNode.State, path, newFileNode, node)
 			}
 
 			// deleting the node from the new ones, to avoid being processed twice for the same info
@@ -577,7 +556,7 @@ func (diff *diffInst) Changes() []string {
 
 		ret = append(ret, fmt.Sprintf("%10v: %v", opCreate, path))
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v\n", node.State, path)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %10v: %v\n", node.State, path)
 			}
 	}
 	return ret
@@ -586,7 +565,7 @@ func (diff *diffInst) Changes() []string {
 // resolvePathsAndFlatten generate a flat slice with full path mapped to nodes
 func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeInst) {
 	if debug {
-		fmt.Fprintf(os.Stderr, "[DEBUG] resolvePathsAndFlatten(%v, %v)\n", node.Name, prefix)
+		fmt.Fprintf(os.Stderr, "[DEBUG] resolvePathsAndFlatten() %v%v (%v)\n", prefix, node.Name, node)
 	}
 	newPrefix := prefix + node.Name
 	if debug {
@@ -597,6 +576,11 @@ func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeI
 			fmt.Fprintf(os.Stderr, "[DEBUG]    replacing node %v by %v\n", ret[newPrefix], node)
 		}
 		ret[newPrefix] = node
+	} else {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]    replacing node %v by %v (empty prefix)\n", ret["/"], node)
+		}
+		ret["/"] = node
 	}
 	if node.State == opCreate {
 		// TODO diff equality only
@@ -605,8 +589,12 @@ func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeI
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]    iterating over node %d children\n", len(node.Children))
 	}
+	var trailingSlash string = "/"
+	if node.Name == "/" {
+		trailingSlash = ""
+	}
 	for _, child := range node.Children {
-		resolvePathsAndFlatten(child, newPrefix+"/", ret)
+		resolvePathsAndFlatten(child, newPrefix+trailingSlash, ret)
 	}
 }
 
