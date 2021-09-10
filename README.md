@@ -254,6 +254,21 @@ Do your changes, then, in the source directory, run :
 ~> go build -v
 ```
 
+### Algorithm explained
+
+The program follows this process :
+
+* produce (with `btrfs send` syscall) or get a BRTFS file stream (from CLI arg)
+* parse this file in a binary mode
+* extract commands and their parameters (should match the line of `btrfs receive --dump`)
+  * those commands are mapped with operation (i.e.: command 'delete' => operation 'delete')
+  * commands are associated with paths, mostly only one, and two for rename operation
+  * foreach command's path, we re-created the file tree with an object called 'node'
+  * we maintain two trees: one for new files, one for old files
+  * new files can have an original one, and old file can have a new version
+* after having prcessed all the commands, we flatten and analize the tree
+* foreach old file we produce the resulting change, then the same for each new file
+
 ## Testing
 
 And to be sure that the program is working in your environment, or that you have not broken
