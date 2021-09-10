@@ -752,7 +752,6 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 		case opEnd:
 			debugInd(1, "END operation")
 			stop = true
-			break
 
 		// other operations
 		default:
