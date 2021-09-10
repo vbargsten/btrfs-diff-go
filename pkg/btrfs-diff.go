@@ -793,12 +793,9 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 					ret = err
 					break
 				}
-				debugInd(2, "reading param (C.BTRFS_SEND_A_CLONE_PATH) ...")
-				path, err = command.ReadParam(C.BTRFS_SEND_A_CLONE_PATH)
-			} else {
-				debugInd(2, "reading param (C.BTRFS_SEND_A_PATH) ...")
-				path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			}
+			debugInd(2, "reading param (C.BTRFS_SEND_A_PATH) ...")
+			path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				ret = err
 				break
