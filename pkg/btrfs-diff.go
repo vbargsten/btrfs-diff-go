@@ -508,9 +508,9 @@ func (diff *diffInst) Changes() []string {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        that's a changed file\n")
 			}
 
-			ret = append(ret, fmt.Sprintf("%10v: %v", newFileNode.State, path))
+			ret = append(ret, fmt.Sprintf("%7v: %v", newFileNode.State, path))
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]                appended (node.St:%v): %10v: %v (%v) (%v)\n", opUnspec, newFileNode.State, path, newFileNode, node)
+				fmt.Fprintf(os.Stderr, "[DEBUG]                appended (node.St:%v): %7v: %v (%v) (%v)\n", opUnspec, newFileNode.State, path, newFileNode, node)
 			}
 
 			// deleting the node from the new ones, to avoid being processed twice for the same info
@@ -530,16 +530,16 @@ func (diff *diffInst) Changes() []string {
 				fmt.Fprintf(os.Stderr, "unexpected State on oldParent %v: %v", path, node.State)
 			}
 			if (node.State == opDelete || node.State == opRename) && newFileNode != nil && newFileNode.State == opCreate {
-				ret = append(ret, fmt.Sprintf("%10v: %v", opModify, path))
+				ret = append(ret, fmt.Sprintf("%7v: %v", opModify, path))
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (opDelete||opRename): %10v: %v\n", opModify, path)
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (opDelete||opRename): %7v: %v\n", opModify, path)
 				}
 				delete(newFiles, path)
 			} else {
 				//fmt.Fprintf(os.Stderr, "DEBUG %v %v %v\n ", node.State, newFileNode, path)
-				ret = append(ret, fmt.Sprintf("%10v: %v", node.State, path))
+				ret = append(ret, fmt.Sprintf("%7v: %v", node.State, path))
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %10v: %v\n", node.State, path)
+					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %7v: %v\n", node.State, path)
 				}
 			}
 		}
@@ -554,9 +554,9 @@ func (diff *diffInst) Changes() []string {
 			fmt.Fprintf(os.Stderr, "[DEBUG]    - new node: %v # %v\n", node, path)
 		}
 
-		ret = append(ret, fmt.Sprintf("%10v: %v", opCreate, path))
+		ret = append(ret, fmt.Sprintf("%7v: %v", opCreate, path))
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %10v: %v\n", node.State, path)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v\n", node.State, path)
 			}
 	}
 	return ret
