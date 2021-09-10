@@ -137,7 +137,7 @@ type diffInst struct {
 //       have its time modified and its ownership at the same time, even if this is actually the
 //       case in reality. That simplified design looses information. The last operation will
 //       not override the previous one.
-func (diff *diffInst) processSingleParamOp(Op operation, path string) {
+func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG]            searching for matching node\n")
 	}
@@ -181,7 +181,10 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) {
 			}
 			// Leave behind a sentinel in the Original structure.
 			fileNode.Original.State = opDelete
-			fileNode.Original.verifyDelete(path)
+			err := fileNode.Original.verifyDelete(path)
+			if err != nil {
+				return err
+			}
 			fileNode.Original.Children = nil
 		}
 
@@ -197,15 +200,17 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) {
 			fileNode.State = Op
 		}
 	}
+	return nil
 }
 
 // verifyDelete checks that every children of the node are either deleted or renamed
-func (node *nodeInst) verifyDelete(path string) {
+func (node *nodeInst) verifyDelete(path string) (error) {
 	for _, child := range node.Children {
 		if child.State != opDelete && child.State != opRename {
-			fmt.Fprintf(os.Stderr, "[DEBUG]            BUG? deleting parent of node %v in %v which is not gone", node, path)
+			return fmt.Errorf("BUG? deleting parent of node %v in %v which is not gone", node, path)
 		}
 	}
+	return nil
 }
 
 // processTwoParamsOp is the processing of double params commands (update the Diff double tree)
@@ -819,7 +824,10 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        processing operation '%v'\n", command.Type.Op)
 			}
-			diff.processSingleParamOp(command.Type.Op, path)
+			err = diff.processSingleParamOp(command.Type.Op, path)
+			if err != nil {
+				return err
+			}
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        operation '%v' processed\n", command.Type.Op)
 			}
