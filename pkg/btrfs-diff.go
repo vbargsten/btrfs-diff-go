@@ -537,6 +537,18 @@ func (diff *diffInst) Changes() []string {
 			debugInd(3, "deleting node in new files")
 			delete(newFiles, path)
 
+		// a weird changed file (first deleted, then re-created with another content)
+		} else if node.State == opDelete && newFileNode != nil && newFileNode.State == opCreate {
+			debugInd(2, "not found in new files (%v) or old node St is not '%v'", newFileNode, opUnspec)
+			debugInd(2, "that's a weird changed file (deleted and created)")
+
+			ret = append(ret, fmt.Sprintf("%7v: %v", opModify, path))
+			debugInd(3, "appended (node.St:%v): %7v: %v (%v) (%v)", node.State, opModify, path, newFileNode, node)
+
+			// deleting the node from the new ones, to avoid being processed twice for the same info
+			debugInd(2, "deleting node in new files")
+			delete(newFiles, path)
+
 		// not a modified file (not in new files, or node Op is not opUnspec)
 		} else {
 			debugInd(2, "not found in new files (%v) or old node St is not '%v'", newFileNode, opUnspec)
