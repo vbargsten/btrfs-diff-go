@@ -726,34 +726,37 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	if debug {
 		fmt.Fprintf(os.Stderr, "[DEBUG] reading each command until EOF ...\n")
 	}
+	var ret error = nil
+	var stop bool = false
 	for {
 		// read input and get the command type and data
 		var command *commandInst
 		command, err = readCommand(input)
 		if err != nil {
-			return err
+			ret = err
+			break
 		}
 		if debug {
 			fmt.Fprintf(os.Stderr, "[DEBUG] %v -> %v\n", command.Type.Name, command.Type.Op)
 		}
 
 		// analyze the command ...
+		switch command.Type.Op {
 
 		// unspecified: bug
-		if command.Type.Op == opUnspec {
-			return fmt.Errorf("unexpected command %v", command)
+		case opUnspec:
+			ret = fmt.Errorf("unexpected command %v", command)
 
 		// ignored operation
-		} else if command.Type.Op == opIgnore {
+		case opIgnore:
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]    ignoring (as specified in command definitions)\n")
 			}
-			continue
 
-		// rename operation
-		} else if command.Type.Op == opRename {
+		// two path ops
+		case opRename:
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]    rename operation\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]    '%v' operation\n", command.Type.Op)
 				fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH) ...\n")
 			}
 
@@ -762,7 +765,8 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			var toPath string
 			fromPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
-				return err
+				ret = err
+				break
 			}
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        from: '%v'\n", fromPath)
@@ -770,7 +774,8 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			}
 			toPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH_TO)
 			if err != nil {
-				return err
+				ret = err
+				break
 			}
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        to: '%v'\n", toPath)
@@ -786,14 +791,15 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			}
 
 		// end operation
-		} else if command.Type.Op == opEnd {
+		case opEnd:
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]    END operation\n")
 			}
+			stop = true
 			break
 
 		// other operations
-		} else {
+		default:
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]    other operation (%v)\n", command.Type.Op)
 				fmt.Fprintf(os.Stderr, "[DEBUG]        reading param (C.BTRFS_SEND_A_PATH) ...\n")
@@ -804,7 +810,8 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			path, err = command.ReadParam(C.BTRFS_SEND_A_PATH)
 			if err != nil {
 				if err.Error() != "expect type 15; got 18" {
-					return err
+					ret = err
+					break
 				}
 
 				// the usual way to read param have failed, trying one for the specific case of 'write' operation
@@ -813,7 +820,8 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				}
 				path, err = command.ReadParam(C.BTRFS_SEND_A_FILE_OFFSET)
 				if err != nil {
-					return err
+					ret = err
+					break
 				}
 			}
 			if debug {
@@ -826,14 +834,21 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			}
 			err = diff.processSingleParamOp(command.Type.Op, path)
 			if err != nil {
-				return err
+				ret = err
+				break
 			}
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        operation '%v' processed\n", command.Type.Op)
 			}
 		}
+		if stop || err != nil {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]    breaking out of the loop\n")
+			}
+			break
+		}
 	}
-	return nil
+	return ret
 }
 
 // getSubVolUID return the subvolume UID
