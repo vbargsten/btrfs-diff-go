@@ -189,16 +189,49 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 			fileNode.Original.Children = nil
 		}
 
-	// not a deletion
-	} else {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                    now node is: %v\n", fileNode)
+		}
 
-		// not a creation nor the current operation is a modification
-		if (fileNode.State != opCreate || (Op != opModify && Op != opTimes && Op != opPermissions && Op != opOwnership && Op != opAttributes)) {
+	// not a deletion, and the current operation is different from the current node
+	} else if Op != fileNode.State {
+
+		// not a creation
+		if (fileNode.State != opCreate) {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]            current operation is not a modification, or the current node State is not '%v' (%v)\n", opCreate, fileNode.State)
-				fmt.Fprintf(os.Stderr, "[DEBUG]            replacing it with current operation '%v'\n", Op)
+				fmt.Fprintf(os.Stderr, "[DEBUG]            the current node Op is not '%v'\n", fileNode.State)
 			}
-			fileNode.State = Op
+
+			// do not allow a "subclass" of modifications (i.e.: times, perms, own, attrs) to override the top class modification (i.e.: changed)
+			if (fileNode.State == opModify && (Op == opTimes || Op == opPermissions || Op == opOwnership || Op == opAttributes)) {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                current operation '%v' is a subclass modification\n", Op)
+					fmt.Fprintf(os.Stderr, "[DEBUG]                not overriding the node Op (%v)\n", fileNode.State)
+				}
+
+			// overriding the current node operation
+			} else {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                replacing it with current operation '%v'\n", Op)
+				}
+				fileNode.State = Op
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                now node is: %v\n", fileNode)
+				}
+			}
+
+		// current node Op is opCreate
+		} else {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]            current node Op is '%v': not overriding the node Op\n", fileNode.State)
+			}
+		}
+
+	// current operation is the same as the current node
+	} else {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]            current operation (%v) is the same as the node Op (%v)\n", Op, fileNode.State)
+			fmt.Fprintf(os.Stderr, "[DEBUG]            not overriding the node Op\n")
 		}
 	}
 	return nil
