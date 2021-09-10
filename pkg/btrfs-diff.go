@@ -155,17 +155,49 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 		if debug {
 			fmt.Fprintf(os.Stderr, "[DEBUG]            that's a deletion\n")
 		}
+		parentWasRenamed := false
 		if fileNode.Original == nil {
 			if debug {
 				fmt.Fprintf(os.Stderr, "[DEBUG]                no previous version of the node exist\n")
 			}
-			fmt.Fprintf(os.Stderr, "[DEBUG]            BUG? deleting path %v which was created in same diff?\n", path)
+			// if parent wasn't renamed its a bug
+			if fileNode.Parent == nil || fileNode.Parent.State != opCreate || fileNode.Parent.Original == nil || fileNode.Parent.Original.State != opRename {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                BUG? deleting path %v which was created in same diff?\n", path)
+				os.Exit(1)
+
+			// parent node was renamed
+			} else {
+				parentWasRenamed = true
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]                    parent was renamed, that's normal\n")
+				}
+			}
 		}
-		// deleting the node in new files tree
+
+		// parent was renamed: not deleting the node in the new files
+		if parentWasRenamed {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                    parent was renamed, not deleting the node (New files)\n")
+			}
+
+		// parent not renamed
+		} else {
+
+			// deleting the node in new files tree
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]                deleting the node in the Parent tree (New tree)\n")
+			}
+			delete(fileNode.Parent.Children, fileNode.Name)
+		}
+
+		// flag the new one as deleted
 		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]                deleting the node in the Parent tree (New tree)\n")
+			fmt.Fprintf(os.Stderr, "[DEBUG]                flaging the node as '%v'\n", opDelete)
 		}
-		delete(fileNode.Parent.Children, fileNode.Name)
+		fileNode.State = opDelete
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]                now node is: %v\n", fileNode)
+		}
 
 		// If we deleted /this/ node, it sure as hell needs no children.
 		if debug {
@@ -426,48 +458,61 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 					oldParent.Children = make(map[string]*nodeInst)
 				}
 
-				// get the node in the old tree (Original tree)
-				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG]                                getting the old node (Original tree)\n")
-				}
-				oldNode := oldParent.Children[nodeName]
-				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG]                                    found: %v\n", oldNode)
-				}
+				// the parent node was renamed
+				//if parent.State == opCreate && oldParent.State == opDelete {
+				if parent.State == opCreate && oldParent.State == opRename {
 
-				// the node didn't exist before
-				if oldNode == nil {
+					// do not create the old node version
+					// because it is supposed to be processed by the new files tree
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG]                        node '%v' didn't exist before (Original tree)\n", nodeName)
+						fmt.Fprintf(os.Stderr, "[DEBUG]                                old parent node was renamed, not creating the old node in it\n")
 					}
-					if !isNew || i < len(parts)-1 {
-						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                                isNew is 'false' or the parent part isn't the last one\n")
+
+				// no renaming of the parent node
+				} else {
+
+					// get the node in the old tree (Original tree)
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG]                                getting the old node (Original tree)\n")
+					}
+					oldNode := oldParent.Children[nodeName]
+					if debug {
+						fmt.Fprintf(os.Stderr, "[DEBUG]                                    found: %v\n", oldNode)
+					}
+
+					// the node didn't exist before
+					if oldNode == nil {
+						if !isNew || i < len(parts)-1 {
+							if debug {
+								fmt.Fprintf(os.Stderr, "[DEBUG]                                isNew is 'false' or the parent part isn't the last one\n")
+							}
+
+							// Was meant to already exist, so make sure it did!
+							if debug {
+								fmt.Fprintf(os.Stderr, "[DEBUG]                                creating old node\n")
+							}
+							oldParent.Children[nodeName] = &nodeInst{}
+							oldNode = oldParent.Children[nodeName]
+							oldNode.Name = nodeName
+							oldNode.Parent = oldParent
+							newNode.Original = oldNode
+							if debug {
+								fmt.Fprintf(os.Stderr, "[DEBUG]                                    old node created: %v\n", oldNode)
+							}
+							if debug {
+								fmt.Fprintf(os.Stderr, "[DEBUG]                                    added to old parent node '%v' (Original tree)\n", oldParent.Name)
+							}
+						} else {
+							if debug {
+								fmt.Fprintf(os.Stderr, "[DEBUG]                                    not creating the old node because it is new (%t)\n", isNew)
+							}
 						}
 
-						// Was meant to already exist, so make sure it did!
-						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                                creating old node\n")
-						}
-						oldParent.Children[nodeName] = &nodeInst{}
-						oldNode = oldParent.Children[nodeName]
-						oldNode.Name = nodeName
-						oldNode.Parent = oldParent
-						newNode.Original = oldNode
-						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                                    old node created: %v\n", oldNode)
-							fmt.Fprintf(os.Stderr, "[DEBUG]                                    added to old parent node '%v' (Original tree)\n", oldParent.Name)
-						}
+					// old node exist
 					} else {
 						if debug {
-							fmt.Fprintf(os.Stderr, "[DEBUG]                                    not creating the old node because it is new (%t)\n", isNew)
+							fmt.Fprintf(os.Stderr, "[DEBUG]                                previous node version: %v\n", oldNode)
 						}
-					}
-
-				// old node exist
-				} else {
-					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG]                                previous node version: %v\n", oldNode)
 					}
 				}
 			}
@@ -515,6 +560,40 @@ func (node *nodeInst) String() string {
 // convert a tree to a string
 func (diff *diffInst) String() string {
 	return "\n\t" + strings.Join((diff.Changes())[:], "\n\t") + "\n"
+}
+
+// getNodePath return the new path of a node
+func getNodePath(node *nodeInst, isNew bool) string {
+	if node != nil {
+		var path string = node.Name
+		var current *nodeInst = node.Parent
+		if current != nil {
+			for {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]            current node: %v\n", current)
+				}
+				if current.Name != "/" {
+					path = current.Name + "/" + path
+				} else {
+					path = "/" + path
+				}
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]            path (increment): %v\n", path)
+				}
+				current = current.Parent
+				if current == nil {
+					break
+				}
+			}
+		}
+		if len(path) > 0 {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]            path (final): '%v'\n", path)
+			}
+			return path
+		}
+	}
+	return ""
 }
 
 // Changes return the list of changes for a diff double tree
@@ -574,20 +653,20 @@ func (diff *diffInst) Changes() []string {
 				fmt.Fprintf(os.Stderr, "[DEBUG]        not a changed file (%v)\n", node.State)
 			}
 
-			if node.State != opDelete && node.State != opRename {
-				fmt.Fprintf(os.Stderr, "unexpected State on oldParent %v: %v", path, node.State)
-			}
-			if (node.State == opDelete || node.State == opRename) && newFileNode != nil && newFileNode.State == opCreate {
-				ret = append(ret, fmt.Sprintf("%7v: %v", opModify, path))
+			// renaming, is handled by the new files
+			if node.State == opRename {
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (opDelete||opRename): %7v: %v\n", opModify, path)
+					fmt.Fprintf(os.Stderr, "[DEBUG]            was renamed, not append it to the list of changes (handled by new files)\n")
 				}
-				delete(newFiles, path)
+
+			// not a rename
 			} else {
-				//fmt.Fprintf(os.Stderr, "DEBUG %v %v %v\n ", node.State, newFileNode, path)
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]        old node St is not '%v' and not '%v', or not in new files (%v), or new file Op is not '%v'\n", opDelete, opRename, newFileNode, opCreate)
+				}
 				ret = append(ret, fmt.Sprintf("%7v: %v", node.State, path))
 				if debug {
-					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %7v: %v\n", node.State, path)
+					fmt.Fprintf(os.Stderr, "[DEBUG]            appended (rest): %7v: %v\n", node.State, path)
 				}
 			}
 		}
@@ -602,9 +681,28 @@ func (diff *diffInst) Changes() []string {
 			fmt.Fprintf(os.Stderr, "[DEBUG]    - new node: %v # %v\n", node, path)
 		}
 
-		ret = append(ret, fmt.Sprintf("%7v: %v", opCreate, path))
-		if debug {
-			fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v\n", node.State, path)
+		// renaming
+		if node.State == opCreate && node.Original != nil && node.Original.State == opRename {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        was renamed\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]        getting old node path...\n")
+			}
+			oldNodePath := getNodePath(node.Original, false)
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        old node path: '%v'\n", oldNodePath)
+			}
+			if len(oldNodePath) > 0 {
+				ret = append(ret, fmt.Sprintf("%7v: %v to %v", node.Original.State, oldNodePath, path))
+				if debug {
+					fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v to %v\n", node.Original.State, oldNodePath, path)
+				}
+			}
+
+		} else {
+			ret = append(ret, fmt.Sprintf("%7v: %v", node.State, path))
+			if debug {
+				fmt.Fprintf(os.Stderr, "[DEBUG]        appended (new): %7v: %v\n", node.State, path)
+			}
 		}
 	}
 	return ret
@@ -630,8 +728,10 @@ func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeI
 		}
 		ret["/"] = node
 	}
-	if node.State == opCreate {
-		// TODO diff equality only
+	if (node.State == opCreate && (node.Original == nil || node.Original.State != opRename)) {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]    stoping because node St is '%v' (and its original one wasn't renamed)\n", opCreate)
+		}
 		return
 	}
 	if debug {
