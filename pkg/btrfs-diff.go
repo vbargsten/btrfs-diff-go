@@ -146,7 +146,9 @@ func (diff *diffInst) processSingleParamOp(path string, Op operation) {
 		fmt.Fprintf(os.Stderr, "[DEBUG]                is new? %t (only when '%v')\n", isNew, opCreate)
 	}
 	fileNode := diff.updateBothTreesAndReturnNode(path, isNew)
-
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]            found: %v\n", fileNode)
+	}
 
 	// in case of deletion
 	if Op == opDelete {
@@ -173,9 +175,9 @@ func (diff *diffInst) processSingleParamOp(path string, Op operation) {
 		// old version exist
 		if fileNode.Original != nil {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]            node had an Original tree\n")
-				fmt.Fprintf(os.Stderr, "[DEBUG]            setting its State to '%v'\n", opDelete)
-				fmt.Fprintf(os.Stderr, "[DEBUG]            deleting the node children\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]                    node had a previous version\n")
+				fmt.Fprintf(os.Stderr, "[DEBUG]                    setting its State to '%v'\n", opDelete)
+				fmt.Fprintf(os.Stderr, "[DEBUG]                    deleting the old node children\n")
 			}
 			// Leave behind a sentinel in the Original structure.
 			fileNode.Original.State = opDelete
@@ -448,32 +450,42 @@ func (diff *diffInst) Changes() []string {
 
 	// old files
 	for path, node := range oldFiles {
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]    - old node: %v # %v\n", node, path)
+		}
+
+		// getting the same path in the new files
+		var newFileNode *nodeInst = newFiles[path]
+
+		if debug {
+			fmt.Fprintf(os.Stderr, "[DEBUG]        new file node: %v\n", newFileNode)
+		}
 
 		// all the modified files (found in new files and old node Op is opUnspec)
-		if newFiles[path] != nil && node.State == opUnspec {
+		if newFileNode != nil && node.State == opUnspec {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]        found in new files (%v) and old node St is '%v'\n", newFiles[path], opUnspec)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        found in new files (%v) and old node St is '%v'\n", newFileNode, opUnspec)
 				fmt.Fprintf(os.Stderr, "[DEBUG]        that's a changed file\n")
 			}
 
 			if node.Children == nil {
-				newNodeState := newFiles[path].State
+				newNodeState := newFileNode.State
 				// specific case when there might be an empty change detected on the root of the subvolume
-				if path == "/" && newFiles[path].Name == "" {
+				if path == "/" && newFileNode.Name == "" {
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.State:%v, new_node:%v)\n", path, opUnspec, newFiles[path])
+						fmt.Fprintf(os.Stderr, "[DEBUG] not appending %v (node.Children: nil, node.State:%v, new_node:%v)\n", path, opUnspec, newFileNode)
 					}
 				// time modification or permissions
 				} else if (newNodeState == opTimes || newNodeState == opPermissions || newNodeState == opOwnership || newNodeState == opAttributes) {
 					ret = append(ret, fmt.Sprintf("%10v: %v", newNodeState, path))
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newNodeState, path, newFiles[path], node)
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", newNodeState, path, newFileNode, node)
 					}
 				} else {
 					// TODO diff equality only
 					ret = append(ret, fmt.Sprintf("%10v: %v", opModify, path))
 					if debug {
-						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", opModify, path, newFiles[path], node)
+						fmt.Fprintf(os.Stderr, "[DEBUG] appended (node.Children == nil): %10v: %v (%v) (%v)\n", opModify, path, newFileNode, node)
 					}
 				}
 			}
@@ -487,21 +499,21 @@ func (diff *diffInst) Changes() []string {
 		// not a modified file (not in new files, or node Op is not opUnspec)
 		} else {
 			if debug {
-				fmt.Fprintf(os.Stderr, "[DEBUG]        not found in new files (%v) or old node St is not '%v'\n", newFiles[path], opUnspec)
+				fmt.Fprintf(os.Stderr, "[DEBUG]        not found in new files (%v) or old node St is not '%v'\n", newFileNode, opUnspec)
 				fmt.Fprintf(os.Stderr, "[DEBUG]        not a changed file (%v)\n", node.State)
 			}
 
 			if node.State != opDelete && node.State != opRename {
 				fmt.Fprintf(os.Stderr, "unexpected State on oldParent %v: %v", path, node.State)
 			}
-			if (node.State == opDelete || node.State == opRename) && newFiles[path] != nil && newFiles[path].State == opCreate {
+			if (node.State == opDelete || node.State == opRename) && newFileNode != nil && newFileNode.State == opCreate {
 				ret = append(ret, fmt.Sprintf("%10v: %v", opModify, path))
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG] appended (opDelete||opRename): %10v: %v\n", opModify, path)
 				}
 				delete(newFiles, path)
 			} else {
-				//fmt.Fprintf(os.Stderr, "DEBUG DEBUG %v %v %v\n ", node.State, newFiles[path], path)
+				//fmt.Fprintf(os.Stderr, "DEBUG %v %v %v\n ", node.State, newFileNode, path)
 				ret = append(ret, fmt.Sprintf("%10v: %v", node.State, path))
 				if debug {
 					fmt.Fprintf(os.Stderr, "[DEBUG] appended (rest): %10v: %v\n", node.State, path)
@@ -545,6 +557,9 @@ func resolvePathsAndFlatten(node *nodeInst, prefix string, ret map[string]*nodeI
 	if node.State == opCreate {
 		// TODO diff equality only
 		return
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "[DEBUG]    iterating over node %d children\n", len(node.Children))
 	}
 	for _, child := range node.Children {
 		resolvePathsAndFlatten(child, newPrefix+"/", ret)
