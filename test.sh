@@ -5,7 +5,7 @@ set -e
 THIS_DIR="$(realpath "$(dirname "$0")")"
 
 if [ "$BTRFS_DIFF_BIN" = '' ]; then
-    BTRFS_DIFF_BIN="$THIS_DIR"/btrfs-diff
+    BTRFS_DIFF_BIN="$THIS_DIR"/btrfs-diff-go
 fi
 if [ "$TMPDIR" = '' ]; then
     TMPDIR="$THIS_DIR"/.tmp
