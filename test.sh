@@ -100,7 +100,7 @@ for A in "$SNAPS_DIR"/*; do
     for B in "$SNAPS_DIR"/*; do
         if [ "$A" = "$B" ]; then continue; fi
         $use_sudo "$BTRFS_DIFF_BIN" "$A" "$B" > "$TMPDIR"/a_raw 2>&1 || true
-        sort "$TMPDIR"/a_raw > "$TMPDIR"/a || true
+        sed 's#^renamed: \(.*\) to \(.*\)$#  added: \2\ndeleted: \1#g' "$TMPDIR"/a_raw | sort > "$TMPDIR"/a || true
         LC_ALL=C diff -qr "$A" "$B" | \
             sed "s|$A|old|; s|$B|new|g; s|: |/|; s/Only in new/  added: /; s/Only in old/deleted: /; s|Files old/.* and new/\(.*\) differ|changed: /\1|" | \
             sed "/File .* is a fifo while file .* is a fifo/d" | \
