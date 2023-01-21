@@ -272,9 +272,9 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 		// parent not renamed
 		} else {
 
-			// deleting the node in new files tree
-			debugInd(4, "deleting the node in the Parent tree (New tree)")
-			delete(fileNode.Parent.Children, fileNode.Name)
+//  			// deleting the node in new files tree
+//  			debugInd(4, "deleting the node in the Parent tree (New tree)")
+//  			delete(fileNode.Parent.Children, fileNode.Name)
 		}
 
 		// flag the new one as deleted
@@ -282,22 +282,22 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 		fileNode.State = opDelete
 		debugInd(4, "now node is: %v", fileNode)
 
-		// If we deleted /this/ node, it sure as hell needs no children.
-		debugInd(4, "deleting the node children")
-		fileNode.Children = nil
+// 		// If we deleted /this/ node, it sure as hell needs no children.
+// 		debugInd(4, "deleting the node children")
+// 		fileNode.Children = nil
 
 		// old version exist
 		if fileNode.Original != nil {
 			debugInd(5, "node had a previous version")
 			debugInd(5, "setting its State to '%v'", opDelete)
-			debugInd(5, "deleting the old node children")
 			// Leave behind a sentinel in the Original structure.
 			fileNode.Original.State = opDelete
 			err := fileNode.Original.verifyDelete(path)
 			if err != nil {
 				return err
 			}
-			fileNode.Original.Children = nil
+// 			debugInd(5, "deleting the old node children")
+// 			fileNode.Original.Children = nil
 		}
 
 		debugInd(5, "now node is: %v", fileNode)
@@ -320,6 +320,13 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 				fileNode.State = Op
 				debugInd(4, "now node is: %v", fileNode)
 			}
+
+		// current node Op is opCreate and node was previously deleted
+		} else if (fileNode.State == opDelete) {
+
+			// overwritting its state with 'created'
+			debugInd(3, "current node Op is '%v': overriding the node Op with '%v'", fileNode.State, opCreate)
+			fileNode.State = opCreate
 
 		// current node Op is opCreate
 		} else {
@@ -505,14 +512,14 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 
 				// the parent node was renamed
 				//if parent.State == opCreate && oldParent.State == opDelete {
-				if parent.State == opCreate && oldParent.State == opRename {
-
-					// do not create the old node version
-					// because it is supposed to be processed by the new files tree
-					debugInd(8, "old parent node was renamed, not creating the old node in it")
-
-				// no renaming of the parent node
-				} else {
+// 				if parent.State == opCreate && oldParent.State == opRename {
+//
+// 					// do not create the old node version
+// 					// because it is supposed to be processed by the new files tree
+// 					debugInd(8, "old parent node was renamed, not creating the old node in it")
+//
+// 				// no renaming of the parent node
+// 				} else {
 
 					// get the node in the old tree (Original tree)
 					debugInd(8, "getting the old node (Original tree)")
@@ -541,7 +548,7 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 					} else {
 						debugInd(8, "previous node version: %v", oldNode)
 					}
-				}
+// 				}
 			}
 
 		// the parent part/node exists
@@ -551,18 +558,11 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 				debugInd(7, "isNew is 'true' and the parent part is the last one")
 
 				// As this is the target of a create, we should expect to see
-				// nothing here.
-				fmt.Fprintf(os.Stderr, "BUG? overwritten path %v already existed\n", path)
-
-				debug("DURING: updateBothTreesAndReturnNode\n")
-				debug("--- Tree Original ---\n")
-				diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
-				debug("--- END ---\n")
-				debug("--- Tree New ---\n")
-				diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
-				debug("--- END ---\n")
-
-				os.Exit(1)
+				// nothing here... or a previously deleted node
+				if (newNode.State != opDelete) {
+					fmt.Fprintf(os.Stderr, "BUG? overwritten path %v already existed\n", path)
+					os.Exit(1)
+				}
 			}
 		}
 		parent = newNode
@@ -637,6 +637,12 @@ func (diff *diffInst) Changes() []string {
 	for path, node := range oldFiles {
 		debugInd(1, "- old node: %v # %v", node, path)
 
+		ancestorRenamed := node.getFirstAncestorRenamed(false /* only consider parent's state */)
+		if ancestorRenamed != nil {
+			debugInd(2, "a node's parent has been renamed (%v): ignoring", ancestorRenamed)
+			continue
+		}
+
 		// getting the same path in the new files
 		var newFileNode *nodeInst = newFiles[path]
 
@@ -684,7 +690,11 @@ func (diff *diffInst) Changes() []string {
 			if node.State == opRename {
 				debugInd(3, "was renamed, not append it to the list of changes (handled by new files)")
 
-			// not a rename
+			// deletion of a node belonging to a parent also deleted
+			} else if (node.State == opDelete && node.Parent.State == opDelete) {
+				debugInd(2, "old node St is '%v' and its parent too: ignoring a node deletion in a parent deleted", node.State)
+
+			// something else
 			} else {
 				debugInd(2, "old node St is not '%v' and not '%v', or not in new files (%v), or new file Op is not '%v'", opDelete, opRename, newFileNode, opCreate)
 				ret = append(ret, fmt.Sprintf("%7v: %v", node.State, path))
@@ -698,6 +708,12 @@ func (diff *diffInst) Changes() []string {
 	for path, node := range newFiles {
 		debugInd(1, "- new node: %v # %v", node, path)
 
+		ancestorRenamed := node.getFirstAncestorRenamed(true /* consider parent's original node state */)
+		if ancestorRenamed != nil {
+			debugInd(2, "a node's parent has been renamed (%v): ignoring", ancestorRenamed)
+			continue
+		}
+
 		// renaming
 		if node.State == opCreate && node.Original != nil && node.Original.State == opRename {
 			debugInd(2, "was renamed")
@@ -709,12 +725,34 @@ func (diff *diffInst) Changes() []string {
 				debugInd(2, "appended (new): %7v: %v to %v", node.Original.State, oldNodePath, path)
 			}
 
+		} else if (node.State == opDelete) {
+			debugInd(2, "ignored (deleted): %7v: %v", node.State, path)
 		} else {
 			ret = append(ret, fmt.Sprintf("%7v: %v", node.State, path))
 			debugInd(2, "appended (new): %7v: %v", node.State, path)
 		}
 	}
 	return ret
+}
+
+// return the first node's ancestor that has been renamed
+// if checkOriginal is 'true' this is considering the parent's original state
+// instead of the parent's state
+func (node *nodeInst) getFirstAncestorRenamed(checkOriginal bool) *nodeInst {
+	if node != nil {
+		ref := node
+		for {
+			if ref.Parent == nil {
+				break
+			}
+			if ((ref.Parent.State == opRename && ! checkOriginal) || (
+				ref.Parent.State == opCreate && ref.Parent.Original != nil && ref.Parent.Original.State == opRename)) {
+				return ref.Parent
+			}
+			ref = ref.Parent
+		}
+	}
+	return nil
 }
 
 // resolvePathsAndFlatten generate a flat slice with full path mapped to nodes
