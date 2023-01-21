@@ -154,12 +154,93 @@ func debugInd(ind int, msg string, params ...interface{}) {
 	}
 }
 
+// print a diff tree (only if debug mode is enabled)
+func (node *nodeInst) PrintTree(w io.Writer, root bool, padding string, lenParent int, indexParent int) {
+	if node == nil {
+		return
+	}
+
+	if debugMode {
+        fmt.Fprintf(w, "%s%s (St:%v, ori:%v, parent:%v)\n",
+            padding+getBoxPadding(root, getBoxType(indexParent, lenParent)),
+            node.Name,
+            node.State,
+            node.Original,
+            node.Parent)
+    }
+
+	index := 0
+	for _, child := range node.Children {
+		child.PrintTree(w, false, padding+getBoxPadding(root, getBoxTypeExternal(indexParent, lenParent)), len(node.Children), index)
+		index++
+	}
+}
+
+/* BEGIN copied from: https://github.com/Tufin/asciitree/blob/master/print.go#L47 */
+type BoxType int
+
+const (
+	Regular BoxType = iota
+	Last
+	AfterLast
+	Between
+)
+
+func (boxType BoxType) String() string {
+	switch boxType {
+	case Regular:
+		return "\u251c" // ├
+	case Last:
+		return "\u2514" // └
+	case AfterLast:
+		return " "
+	case Between:
+		return "\u2502" // │
+	default:
+		panic("invalid box type")
+	}
+}
+
+func getBoxType(index int, len int) BoxType {
+	if index+1 == len {
+		return Last
+	} else if index+1 > len {
+		return AfterLast
+	}
+	return Regular
+}
+
+func getBoxTypeExternal(index int, len int) BoxType {
+	if index+1 == len {
+		return AfterLast
+	}
+	return Between
+}
+
+func getBoxPadding(root bool, boxType BoxType) string {
+	if root {
+		return ""
+	}
+
+	return boxType.String() + " "
+}
+/* END copied from: https://github.com/Tufin/asciitree/blob/master/print.go#L47 */
+
 // processSingleParamOp is the processing of single param commands (update the Diff double tree)
 // Note: that code only allow to register for one operation per file. For example, a file can't
 //       have its time modified and its ownership at the same time, even if this is actually the
 //       case in reality. That simplified design looses information. The last operation will
 //       not override the previous one.
 func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
+
+	debug("BEFORE: processSingleParamOp\n")
+	debug("--- Tree Original ---\n")
+	diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
+	debug("--- END ---\n")
+	debug("--- Tree New ---\n")
+	diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
+	debug("--- END ---\n")
+
 	debugInd(3, "searching for matching node")
 	isNew := Op == opCreate
 	debugInd(4, "is new? %t (only when '%v')", isNew, opCreate)
@@ -250,6 +331,15 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 		debugInd(3, "current operation (%v) is the same as the node Op (%v)", Op, fileNode.State)
 		debugInd(3, "not overriding the node Op")
 	}
+
+	debug("AFTER: processSingleParamOp\n")
+	debug("--- Tree Original ---\n")
+	diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
+	debug("--- END ---\n")
+	debug("--- Tree New ---\n")
+	diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
+	debug("--- END ---\n")
+
 	return nil
 }
 
@@ -267,6 +357,14 @@ func (node *nodeInst) verifyDelete(path string) (error) {
 //   It is used only by the 'rename' operation, although it could be used for 'link' op, but this
 //   one is treated as a single param, for simplicity's sake.
 func (diff *diffInst) processTwoParamsOp(Op operation, from string, to string) {
+
+	debug("BEFORE: processTwoParamsOp\n")
+	debug("--- Tree Original ---\n")
+	diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
+	debug("--- END ---\n")
+	debug("--- Tree New ---\n")
+	diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
+	debug("--- END ---\n")
 
 	// from node
 	debugInd(3, "searching for 'from' node")
@@ -318,6 +416,14 @@ func (diff *diffInst) processTwoParamsOp(Op operation, from string, to string) {
 
 		debugInd(4, "now node is: %v", toNode.Parent.Children[toNode.Name])
 	}
+
+	debug("AFTER: processTwoParamsOp\n")
+	debug("--- Tree Original ---\n")
+	diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
+	debug("--- END ---\n")
+	debug("--- Tree New ---\n")
+	diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
+	debug("--- END ---\n")
 }
 
 // updateBothTreesAndReturnNode return the searched node, after it has updated both Diff trees (old and new)
@@ -376,6 +482,15 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 					// an oldParent, we know the full tree, so getting here is a
 					// sign we did it wrong.
 					fmt.Fprintf(os.Stderr, "BUG? referenced path %v cannot exist\n", path)
+
+					debug("DURING: updateBothTreesAndReturnNode\n")
+					debug("--- Tree Original ---\n")
+					diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
+					debug("--- END ---\n")
+					debug("--- Tree New ---\n")
+					diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
+					debug("--- END ---\n")
+
 					os.Exit(1)
 				}
 
@@ -438,6 +553,15 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 				// As this is the target of a create, we should expect to see
 				// nothing here.
 				fmt.Fprintf(os.Stderr, "BUG? overwritten path %v already existed\n", path)
+
+				debug("DURING: updateBothTreesAndReturnNode\n")
+				debug("--- Tree Original ---\n")
+				diff.Original.PrintTree(os.Stderr, true, "", len(diff.Original.Children), 0)
+				debug("--- END ---\n")
+				debug("--- Tree New ---\n")
+				diff.New.PrintTree(os.Stderr, true, "", len(diff.New.Children), 0)
+				debug("--- END ---\n")
+
 				os.Exit(1)
 			}
 		}
