@@ -84,7 +84,11 @@ mv dir/hardlink dir/hardlink.rn
 mv dir/symlink dir/symlink.rn
 mv dir/fifo dir/fifo.rn
 echo todel > dir/file_to_del
-rm -rf dir
+mkdir -p dir/subdir/leafdir
+echo yep > dir/subdir/yep
+echo leaf > dir/subdir/leafdir/leaf
+mv dir topdir
+rm -rf topdir
 END
 ) | while read -r command; do
     (cd "$DATA_DIR"; sh -c "$command")
