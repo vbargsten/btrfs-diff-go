@@ -278,7 +278,7 @@ func (diff *diffInst) processSingleParamOp(Op operation, path string) (error) {
 		}
 
 		// flag the new one as deleted
-		debugInd(4, "flaging the node as '%v'", opDelete)
+		debugInd(4, "flaging the node as '%v' (New tree)", opDelete)
 		fileNode.State = opDelete
 		debugInd(4, "now node is: %v", fileNode)
 
@@ -555,7 +555,7 @@ func (diff *diffInst) updateBothTreesAndReturnNode(path string, isNew bool) *nod
 		} else {
 			debugInd(6, "node exists (New tree)")
 			if isNew && i == len(parts)-1 {
-				debugInd(7, "isNew is 'true' and the parent part is the last one")
+				debugInd(7, "isNew is 'true' and the node is the last one")
 
 				// As this is the target of a create, we should expect to see
 				// nothing here... or a previously deleted node
@@ -671,7 +671,7 @@ func (diff *diffInst) Changes() []string {
 
 		// a weird changed file (first deleted, then re-created with another content)
 		} else if node.State == opDelete && newFileNode != nil && newFileNode.State == opCreate {
-			debugInd(2, "not found in new files (%v) or old node St is not '%v'", newFileNode, opUnspec)
+			debugInd(2, "found in new files (%v) and old node St is '%v' (not '%v')", newFileNode, opDelete, opUnspec)
 			debugInd(2, "that's a weird changed file (deleted and created)")
 
 			ret = append(ret, fmt.Sprintf("%7v: %v", opModify, path))
