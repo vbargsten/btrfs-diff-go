@@ -39,6 +39,9 @@ OPTIONS
 	-h | --help
 		Display help.
 
+	-i | --info
+		Be verbose.
+
 	-d | --debug
 		Be more verbose.
 
@@ -106,6 +109,7 @@ func main() {
 
 	var optionHelp bool = false
 	var optionDebug bool = false
+	var optionInfo bool = false
 	var optionFile string = ""
 	var optionWithTimes bool = false
 	var optionTimesAsChanged bool = false
@@ -130,6 +134,8 @@ func main() {
 		switch(arg) {
 			case "-h", "--help":
 				optionHelp = true
+			case "-i", "--info":
+				optionInfo = true
 			case "-d", "--debug":
 				optionDebug = true
 			case "-t", "--with-times":
@@ -167,7 +173,12 @@ func main() {
 		os.Exit(0)
 	}
 
+	if optionInfo {
+		btrfsdiff.SetInfo(true)
+	}
+
 	if optionDebug {
+		btrfsdiff.SetInfo(true)
 		btrfsdiff.SetDebug(true)
 	}
 

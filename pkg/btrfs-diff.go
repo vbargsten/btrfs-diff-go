@@ -27,8 +27,11 @@ import (
 	"unsafe"
 )
 
+var infoMode bool = false
 var debugMode bool = false
+var infoLogger *log.Logger
 var debugLogger *log.Logger
+var infoPrefix string = "[INFO] "
 var debugPrefix string = "[DEBUG] "
 var debugIndTab string = "    "
 
@@ -134,6 +137,13 @@ type nodeInst struct {
 type diffInst struct {
 	Original nodeInst
 	New      nodeInst
+}
+
+// info print a message (to STDERR) only if info mode is enabled
+func info(msg string, params ...interface{}) {
+	if infoMode {
+		infoLogger.Printf(msg, params...)
+	}
 }
 
 // debug print a message (to STDERR) only if debug mode is enabled
@@ -882,6 +892,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 	if ver != 1 {
 		return fmt.Errorf("unexpected stream version %v", ver)
 	}
+	info("reading each command until EOF ...")
 	debug("reading each command until EOF ...")
 	var ret error = nil
 	var stop bool = false
@@ -893,6 +904,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 			ret = err
 			break
 		}
+		info("%v -> %v", command.Type.Name, command.Type.Op)
 		debug("%v -> %v", command.Type.Name, command.Type.Op)
 
 		// analyze the command ...
@@ -919,6 +931,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				ret = err
 				break
 			}
+			info("@from: '%v'", fromPath)
 			debugInd(2, "from: '%v'", fromPath)
 			debugInd(2, "reading param (C.BTRFS_SEND_A_PATH_TO) ...")
 			toPath, err = command.ReadParam(C.BTRFS_SEND_A_PATH_TO)
@@ -926,6 +939,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				ret = err
 				break
 			}
+			info("@to: '%v'", toPath)
 			debugInd(2, "to: '%v'", toPath)
 
 			// process to represent the renaming in the diff double tree
@@ -964,6 +978,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 				ret = err
 				break
 			}
+			info("@path: '%v'", path)
 			debugInd(2, "path: '%v'", path)
 
 			// adding the operation to the list of changes
@@ -987,6 +1002,7 @@ func doReadStream(stream *os.File, diff *diffInst) error {
 func getSubVolUID(path string) (C.__u64, error) {
 	var sus C.struct_subvol_uuid_search
 	var subvolInfo *C.struct_subvol_info
+	info("opening path '%s'", path)
 	debug("opening path '%s'", path)
 	subvolDir, err := os.OpenFile(path, os.O_RDONLY, 0777)
 	if err != nil {
@@ -1125,6 +1141,15 @@ func GetChangesFromStreamFile(streamfile string) ([]string, error) {
 		return nil, err
 	}
 	return diff.Changes(), nil
+}
+
+// SetInfo set the info mode flag
+func SetInfo(status bool) {
+	infoMode = status
+	if infoMode {
+		infoLogger = log.New(os.Stderr, infoPrefix, log.Lmicroseconds)
+		info("INFO mode enabled")
+	}
 }
 
 // SetDebug set the debug mode flag
