@@ -166,18 +166,16 @@ func debugInd(ind int, msg string, params ...interface{}) {
 
 // print a diff tree (only if debug mode is enabled)
 func (node *nodeInst) PrintTree(w io.Writer, root bool, padding string, lenParent int, indexParent int) {
-	if node == nil {
+	if node == nil || !debugMode {
 		return
 	}
 
-	if debugMode {
         fmt.Fprintf(w, "%s%s (St:%v, ori:%v, parent:%v)\n",
             padding+getBoxPadding(root, getBoxType(indexParent, lenParent)),
             node.Name,
             node.State,
             node.Original,
             node.Parent)
-    }
 
 	index := 0
 	for _, child := range node.Children {
