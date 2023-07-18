@@ -312,7 +312,7 @@ Extended, fixed, and maintained by: [Michael Bideau](https://github.com/mbideau)
 With a lot of thanks to :
 
 * [Mek101](https://github.com/Mek101): very good crash-tester :wink:
-
+* [vbargsten](https://github.com/vbargsten): testing and debugging support
 
 ## Copyright and License GPLv3
 
